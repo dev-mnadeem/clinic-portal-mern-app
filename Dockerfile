@@ -5,6 +5,7 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci --omit=dev
 COPY backend ./backend
+COPY scripts/create-admin.js scripts/seed-demo.js ./scripts/
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 app && chown -R app:nodejs /app
 USER app
 EXPOSE 5000
