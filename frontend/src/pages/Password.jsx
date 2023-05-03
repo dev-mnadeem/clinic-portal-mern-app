@@ -1,35 +1,41 @@
 import {useState} from 'react';
-import {useNavigate} from 'react-router-dom';
-import axios from 'axios';
-import {API_BASE,currentSession,clearSession} from '../api/session';
-import '../styles/passwordStyle.scss';
+import {Link, useNavigate} from 'react-router-dom';
+import {currentSession, clearSession} from '../api/session';
+import {roleEndpoints, send, errorMessage} from '../api/clinic';
 
-const endpoints={patient:'Patients',doctor:'Doctors',lab:'Labs',pharmacy:'Pharmacies',admin:'Admin'};
+const homes = {patient:'/pat', doctor:'/doc', lab:'/lab', pharmacy:'/pharm', admin:'/admin'};
+
 export default function Password() {
-  const navigate=useNavigate();
-  const session=currentSession();
-  const [password,setPassword]=useState('');
-  const [newpass,setNewpass]=useState('');
-  const [error,setError]=useState('');
-  const [saving,setSaving]=useState(false);
+  const navigate = useNavigate();
+  const session = currentSession();
+  const [password, setPassword] = useState('');
+  const [newpass, setNewpass] = useState('');
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
   async function submit(event) {
-    event.preventDefault();setError('');setSaving(true);
+    event.preventDefault();
+    setError('');
+    setSaving(true);
     try {
-      await axios.post(`${API_BASE}/api/${endpoints[session.role]}/changePass`,{data:{password,newpass}});
-      clearSession();navigate('/');
-    } catch {setError('Password change failed. Check your current password and try again.');}
-    finally {setSaving(false);}
+      await send(`${roleEndpoints[session.role]}/changePass`, {password, newpass});
+      clearSession();
+      navigate('/');
+    } catch (failure) {
+      setError(errorMessage(failure, 'Password change failed. Check your current password and try again.'));
+      setSaving(false);
+    }
   }
-  return <main id="password-page" className="container py-5">
+  return <main className="entry entry-narrow">
+    <p className="eyebrow"><Link to={homes[session?.role] || '/'}>Back to your workspace</Link></p>
     <h1>Change your password</h1>
-    <p>Changing it signs out your existing sessions.</p>
-    <form onSubmit={submit}>
-      <label htmlFor="current-password" className="form-label">Current password</label>
-      <input id="current-password" className="form-control mb-3" type="password" autoComplete="current-password" required value={password} onChange={event=>setPassword(event.target.value)}/>
-      <label htmlFor="new-password" className="form-label">New password</label>
-      <input id="new-password" className="form-control mb-3" type="password" autoComplete="new-password" required minLength={12} value={newpass} onChange={event=>setNewpass(event.target.value)}/>
-      {error && <p role="alert">{error}</p>}
-      <button className="btn btn-primary" disabled={saving}>{saving?'Saving…':'Change password'}</button>
+    <p>Changing it signs out every existing session, including this one.</p>
+    <form className="stack" onSubmit={submit}>
+      <label htmlFor="current-password">Current password</label>
+      <input id="current-password" type="password" autoComplete="current-password" required value={password} onChange={event => setPassword(event.target.value)}/>
+      <label htmlFor="new-password">New password <span className="hint">(at least 12 characters)</span></label>
+      <input id="new-password" type="password" autoComplete="new-password" required minLength={12} value={newpass} onChange={event => setNewpass(event.target.value)}/>
+      {error && <p className="notice notice-error" role="alert">{error}</p>}
+      <button className="button" disabled={saving}>{saving ? 'Saving…' : 'Change password'}</button>
     </form>
   </main>;
 }

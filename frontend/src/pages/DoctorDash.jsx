@@ -1,291 +1,93 @@
-import { useCallback } from 'react';
-import { API_BASE } from "../api/session";
-import { clearSession, currentSession } from "../api/session";
-import React from "react";
-import "../styles/DoctorDashStyle.scss";
-import axios from "axios";
-import { useEffect, useState } from "react";
-import Userdisplay from "../components/Userdisplay";
-import "../../node_modules/bootstrap/dist/css/bootstrap.min.css";
-import "../../node_modules/bootstrap/js/dist/modal.js";
-import { useLocation } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import {useState} from 'react';
+import Workspace from '../components/Workspace';
+import Section from '../components/Section';
+import ListState from '../components/ListState';
+import useResource from '../hooks/useResource';
+import {send, errorMessage} from '../api/clinic';
 
-const DoctorDash = () => {
-  const location = useLocation();
-  const actor = location.state?.user || currentSession()?.user;
-  const navigate = useNavigate();
-  const navtohome = () => {
-    clearSession();
-    navigate("/");
-  };
-  const [appointments, setappointments] = useState([]);
-  const [booked, setbooked] = useState([]);
-  const [reset, setreset] = useState(false);
-  const [patient, setpatient] = useState();
-  const fetch = useCallback(async (id, type) => {
+const loadPending = () => send('Doctors/getAllPendingAppointments');
+const loadAccepted = () => send('Doctors/getAllAcceptedAppointments');
+
+function OrderForm({appointment, kind, onDone, onCancel}) {
+  const [medicine, setMedicine] = useState('');
+  const [quantity, setQuantity] = useState('1');
+  const [testType, setTestType] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const prefix = `${kind}-${appointment._id}`;
+  async function submit(event) {
+    event.preventDefault();
+    setBusy(true);
+    setError('');
     try {
-      const response = await axios.post(
-        `${API_BASE}/api/Doctors/${type}`,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          data: {
-            userID: id,
-          },
-        }
-      );
-      if (type === "getAllPendingAppointments") {
-        setappointments(response.data);
+      if (kind === 'prescription') {
+        await send('Doctors/addPrescription', {Med:medicine, quantity:Number(quantity), patientId:appointment.patientId});
+      } else {
+        await send('Doctors/addReport', {reporttype:testType, patientId:appointment.patientId});
       }
-      if (type === "getAllAcceptedAppointments") {
-        setbooked(response.data);
-      }
-    } catch (error) {
-      console.error(error);
+      onDone(kind === 'prescription' ? `Prescription for ${appointment.patientName} saved. The administrator routes it to a pharmacy.` : `Test request for ${appointment.patientName} saved. The administrator routes it to a laboratory.`);
+    } catch (failure) {
+      setError(errorMessage(failure, 'Could not save. Try again.'));
+      setBusy(false);
     }
-  }, []);
-  useEffect(() => {
-    fetch(actor._id, "getAllPendingAppointments");
-    fetch(actor._id, "getAllAcceptedAppointments");
-  }, [actor._id, fetch]);
-  useEffect(() => {
-    if (reset) {
-      fetch(actor._id, "getAllPendingAppointments");
-      fetch(actor._id, "getAllAcceptedAppointments");
-      setreset(false);
-    }
-  }, [reset, actor._id, fetch]);
-
-  const addprescription = async (Med, patientId, quantity) => {
-    try {
-      await axios.post(
-        `${API_BASE}/api/Doctors/addPrescription`,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          data: {
-            Med: Med,
-            patientId: patientId,
-            quantity: quantity,
-            doctorId: actor._id,
-          },
-        }
-      );
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const addpresc = () => {
-    const medname = document.getElementById("medname").value;
-    const quantity = document.getElementById("quantity").value;
-    addprescription(medname, patient, quantity);
-  };
-
-  const addlab = async (reporttype, patientId) => {
-    try {
-      await axios.post(
-        `${API_BASE}/api/Doctors/addReport`,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          data: {
-            reporttype: reporttype,
-            patientId: patientId,
-            doctorId: actor._id,
-          },
-        }
-      );
-    } catch (error) {
-      console.error(error);
-    }
-  };
-  const addpatientlab = () => {
-    let test = document.getElementById("Test-type").value;
-    addlab(test, patient);
-  };
-
-  return (
-    <div id="doctor-dash">
-      <div className="container-fluid">
-        <div className="row">
-          <div id="side-nav" className="col-xl-2 col-lg-2 col-3 px-0 pt-2">
-            <div className="nav d-flex flex-column align-items-center   px-0">
-              <h1 className="mb-5" onClick={navtohome}>
-                Curify
-              </h1>
-              <div className="navigate d-flex flex-column align-items-start justify-content-evenly ">
-                <div className="navlink ps-xl-3 ps-lg-3 ps-1">
-                  <h4>Doctor: {actor.name}</h4>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div
-            id="main-content"
-            className=" py-4 col-xl-10 col-lg-10 col-9 d-flex flex-column align-items-center"
-          >
-            <h3>Confirm Appointment</h3>
-            {appointments.length !== 0 ? (
-              <>
-                {Object.keys(appointments).map((key) => (
-                  <Userdisplay
-                    user={appointments[key]}
-                    reset={setreset}
-                    usertype="doctor"
-                  ></Userdisplay>
-                ))}
-              </>
-            ) : (
-              <h5 className="text-muted mt-2">No Appointments</h5>
-            )}
-
-            <h3>Appointments</h3>
-            <table>
-              <tr>
-                <th>Patients Name</th>
-                <th>Date</th>
-                <th className="d-flex flex-row align-items-center justify-content-center">
-                  Prescribe
-                </th>
-              </tr>
-
-              <>
-                {Object.keys(booked).map((key) => (
-                  <tr>
-                    <td>{booked[key].patientName}</td>
-                    <td>{booked[key].dateTime}</td>
-                    <td className="d-flex flex-row align-items-center justify-content-center">
-                      <button
-                        type="button"
-                        className="btn button"
-                        data-bs-toggle="modal"
-                        data-bs-target="#exampleModal3"
-                        onClick={() => setpatient(booked[key].patientId)}
-                      >
-                        Add prescription
-                      </button>
-                      <button
-                        type="button"
-                        className="btn button mx-2"
-                        data-bs-toggle="modal"
-                        data-bs-target="#exampleModal7"
-                        onClick={() => setpatient(booked[key].patientId)}
-                      >
-                        Add Lab
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <div
-        className="modal "
-        id="exampleModal3"
-        tabindex="-1"
-        aria-labelledby="exampleModalLabel3"
-        aria-hidden="true"
-      >
-        <div className="modal-dialog">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title" id="exampleModalLabel3">
-                Medicine
-              </h5>
-              <button
-                type="button"
-                className="btn-close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              ></button>
-            </div>
-            <div className="modal-body">
-              <div className="mb-3">
-                <label htmlFor="medname" className="form-label">
-                  Name
-                </label>
-                <input type="text" className="form-control" id="medname" />
-              </div>
-              <div className="mb-3">
-                <label htmlFor="quantity" className="form-label">
-                  Quantity
-                </label>
-                <input type="number" className="form-control" id="quantity" />
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                data-bs-dismiss="modal"
-              >
-                Close
-              </button>
-              <button type="button" className="btn btn-primary" onClick={addpresc}>
-                Save changes
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div
-        className="modal "
-        id="exampleModal7"
-        tabindex="-1"
-        aria-labelledby="exampleModalLabel7"
-        aria-hidden="true"
-      >
-        <div className="modal-dialog">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title" id="exampleModalLabel7">
-                Lab
-              </h5>
-              <button
-                type="button"
-                className="btn-close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              ></button>
-            </div>
-            <div className="modal-body">
-              <div className="mb-3">
-                <label htmlFor="Test-type" className="form-label">
-                  Type
-                </label>
-                <input type="text" className="form-control" id="Test-type" />
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                data-bs-dismiss="modal"
-              >
-                Close
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={addpatientlab}
-              >
-                Save changes
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+  }
+  return <form className="inline-form" onSubmit={submit} aria-label={kind === 'prescription' ? `Prescribe for ${appointment.patientName}` : `Request a test for ${appointment.patientName}`}>
+    {kind === 'prescription' ? <>
+      <label htmlFor={`${prefix}-med`}>Medicine<input id={`${prefix}-med`} required value={medicine} onChange={event => setMedicine(event.target.value)}/></label>
+      <label htmlFor={`${prefix}-qty`}>Quantity<input id={`${prefix}-qty`} type="number" min="1" step="1" required value={quantity} onChange={event => setQuantity(event.target.value)}/></label>
+    </> : <label htmlFor={`${prefix}-type`}>Test<input id={`${prefix}-type`} required placeholder="e.g. Full blood count" value={testType} onChange={event => setTestType(event.target.value)}/></label>}
+    {error && <p className="notice notice-error" role="alert">{error}</p>}
+    <div className="actions">
+      <button className="button" disabled={busy}>Save</button>
+      <button type="button" className="button button-quiet" onClick={onCancel}>Cancel</button>
     </div>
-  );
-};
+  </form>;
+}
 
-export default DoctorDash;
+export default function DoctorDash() {
+  const pending = useResource(loadPending, []);
+  const accepted = useResource(loadAccepted, []);
+  const [open, setOpen] = useState(null);
+  const [notice, setNotice] = useState(null);
+
+  async function decide(appointment, action) {
+    try {
+      await send(`Doctors/${action}Appointments`, {AppID:appointment._id});
+      setNotice({ok:true, text:action === 'accept' ? `Confirmed the visit with ${appointment.patientName}.` : `Declined the request from ${appointment.patientName}.`});
+      await Promise.all([pending.reload(), accepted.reload()]);
+    } catch (failure) {
+      setNotice({ok:false, text:errorMessage(failure, 'That appointment could not be updated.')});
+    }
+  }
+
+  return <Workspace title="Today’s patients" intro="Confirm visit requests, then prescribe or request tests for confirmed patients.">
+    {notice && <p className={`notice ${notice.ok ? 'notice-ok' : 'notice-error'}`} role={notice.ok ? 'status' : 'alert'}>{notice.text}</p>}
+    <Section id="pending-heading" title="Visit requests">
+      <ListState {...pending} empty={!pending.data.length} emptyText="No visit requests are waiting." onRetry={pending.reload}>
+        <ul className="rows">
+          {pending.data.map(row => <li key={row._id} className="row">
+            <div><strong>{row.patientName}</strong><span className="muted">{row.dateTime} · {row.reason}</span></div>
+            <div className="actions">
+              <button type="button" className="button" onClick={() => decide(row, 'accept')}>Confirm</button>
+              <button type="button" className="button button-quiet" onClick={() => decide(row, 'reject')}>Decline</button>
+            </div>
+          </li>)}
+        </ul>
+      </ListState>
+    </Section>
+    <Section id="accepted-heading" title="Confirmed visits">
+      <ListState {...accepted} empty={!accepted.data.length} emptyText="No confirmed visits yet." onRetry={accepted.reload}>
+        <ul className="rows">
+          {accepted.data.map(row => <li key={row._id} className="row row-wrap">
+            <div><strong>{row.patientName}</strong><span className="muted">{row.dateTime} · {row.reason}</span></div>
+            <div className="actions">
+              <button type="button" className="button button-quiet" aria-expanded={open?.id === row._id && open.kind === 'prescription'} onClick={() => setOpen({id:row._id, kind:'prescription'})}>Prescribe</button>
+              <button type="button" className="button button-quiet" aria-expanded={open?.id === row._id && open.kind === 'test'} onClick={() => setOpen({id:row._id, kind:'test'})}>Request test</button>
+            </div>
+            {open?.id === row._id && <OrderForm key={open.kind} appointment={row} kind={open.kind} onCancel={() => setOpen(null)} onDone={text => {setOpen(null); setNotice({ok:true, text});}}/>}
+          </li>)}
+        </ul>
+      </ListState>
+    </Section>
+  </Workspace>;
+}

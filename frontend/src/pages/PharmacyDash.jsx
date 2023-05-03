@@ -1,331 +1,80 @@
-import { useCallback } from 'react';
-import { API_BASE } from "../api/session";
-import { clearSession, currentSession } from "../api/session";
-import React from "react";
-import "../styles/pharmacydashstyle.scss";
-import axios from "axios";
-import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
-import "../../node_modules/bootstrap/js/dist/modal.js";
-import { useNavigate } from "react-router-dom";
+import {useState} from 'react';
+import Workspace from '../components/Workspace';
+import Section from '../components/Section';
+import ListState from '../components/ListState';
+import useResource from '../hooks/useResource';
+import {send, fetchJson, errorMessage} from '../api/clinic';
 
-const PharmacyDash = () => {
-  const navigate = useNavigate();
-  const navtohome = () => {
-    clearSession();
-    navigate("/");
-  };
-  const location = useLocation();
-  const actor = location.state?.user || currentSession()?.user;
-  const actorId = actor._id;
-  const [patients, setpatients] = useState([]);
-  const [medicine, setmedicine] = useState([]);
+const loadStock = async () => Object.entries(await send('Pharmacies/getAllMedicine') || {}).filter(([, count]) => count > 0);
 
-  const [reset, setreset] = useState(false);
-  const fetchpatients = useCallback(async () => {
-    let temp;
+// One row per patient, with every undelivered prescription assigned here.
+async function loadQueue() {
+  const patients = await fetchJson('Pharmacies/patients');
+  return Promise.all(patients.map(async patient => ({
+    ...patient,
+    prescriptions:(await send('Pharmacies/getClientPrescription', {patientId:patient._id})).Prescription,
+  })));
+}
+
+function StockForm({onAdded}) {
+  const [name, setName] = useState('');
+  const [quantity, setQuantity] = useState('');
+  const [error, setError] = useState('');
+  async function submit(event) {
+    event.preventDefault();
+    setError('');
     try {
-      const response = await axios.get(
-        `${API_BASE}/api/Pharmacies/patients`,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      temp = response.data;
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setpatients(temp || []);
+      await send('Pharmacies/addMedicine', {Med:name.trim(), quantity:Number(quantity)});
+      setName('');
+      setQuantity('');
+      onAdded();
+    } catch (failure) {
+      setError(errorMessage(failure, 'Stock could not be updated.'));
     }
-  }, []);
+  }
+  return <form className="form-grid" onSubmit={submit}>
+    <label htmlFor="stock-name">Medicine<input id="stock-name" required pattern="[^.$]+" title="Names cannot contain . or $" value={name} onChange={event => setName(event.target.value)}/></label>
+    <label htmlFor="stock-qty">Units received<input id="stock-qty" type="number" min="1" step="1" required value={quantity} onChange={event => setQuantity(event.target.value)}/></label>
+    {error && <p className="notice notice-error span-2" role="alert">{error}</p>}
+    <button className="button">Add to stock</button>
+  </form>;
+}
 
-  const fetchmedicines = useCallback(async () => {
-    let temp;
+export default function PharmacyDash() {
+  const queue = useResource(loadQueue, []);
+  const stock = useResource(loadStock, []);
+  const [notice, setNotice] = useState(null);
+
+  async function dispense(patient, prescription) {
     try {
-      const response = await axios.post(
-        `${API_BASE}/api/Pharmacies/getAllMedicine`,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          data: {
-            PharmId: actorId,
-          },
-        }
-      );
-      temp = response.data;
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setmedicine(temp || {});
+      await send('Pharmacies/deliverMedicine', {PresId:prescription._id});
+      setNotice({ok:true, text:`Dispensed ${prescription.Quantity} × ${prescription.Medicine} to ${patient.name}.`});
+      await Promise.all([queue.reload(), stock.reload()]);
+    } catch (failure) {
+      setNotice({ok:false, text:errorMessage(failure, 'That prescription could not be dispensed.')});
     }
-  }, [actorId]);
-  const fetchprescription = async (patientId, type) => {
-    let name;
-    let quant;
-    let id;
-    try {
-      const response = await axios.post(
-        `${API_BASE}/api/Pharmacies/getClientPrescription`,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          data: {
-            patientId: patientId,
-          },
-        }
-      );
-      id = response.data.Prescription[0]._id;
-      name = response.data.Prescription[0].Medicine;
-      quant = response.data.Prescription[0].Quantity;
+  }
 
-      //   console.log(temp);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      if (type === "viewonly") {
-        if (typeof name === 'string' && Number.isFinite(Number(quant))) {
-          document.getElementById("precname").textContent = `${name}-${quant}`;
-        } else {
-          document.getElementById("precname").textContent =
-            "No prescription added";
-        }
-      }
-      if (type === "deliver") {
-        delivermedicine(name, quant, id);
-      }
-    }
-  };
-  const addmedicine = async (Med, quantity) => {
-    try {
-      await axios.post(
-        `${API_BASE}/api/Pharmacies/addMedicine`,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          data: {
-            PharmId: actorId,
-            Med: Med,
-            quantity: Number(quantity),
-          },
-        }
-      );
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setreset(true);
-    }
-  };
-  const delivermedicine = async (Med, quantity, PresId) => {
-    try {
-      await axios.post(
-        `${API_BASE}/api/Pharmacies/deliverMedicine`,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          data: {
-            PharmId: actorId,
-            Med: Med,
-            quantity: Number(quantity),
-            PresId: PresId,
-          },
-        }
-      );
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setreset(true);
-    }
-  };
-  const medadder = () => {
-    let quant = document.getElementById("quantity").value;
-    let medname = document.getElementById("medname").value;
-    if (Number.isInteger(Number(quant)) && Number(quant) > 0) {
-      addmedicine(medname, quant);
-    }
-  };
-  useEffect(() => {
-    fetchpatients();
-    fetchmedicines();
-  }, [fetchpatients, fetchmedicines]);
-  useEffect(() => {
-    if (reset) {
-      fetchpatients();
-      fetchmedicines();
-      setreset(false);
-    }
-  }, [reset, fetchpatients, fetchmedicines]);
-
-  const dyntext = (id) => {
-    fetchprescription(id, "viewonly");
-  };
-  const deliver = (id) => {
-    fetchprescription(id, "deliver");
-  };
-  return (
-    <div id="pharm-dash">
-      <div className="container-fluid">
-        <div className="row">
-          <div id="side-nav" className="col-xl-2 col-lg-2 col-3 px-0 pt-2">
-            <div className="nav d-flex flex-column align-items-center   px-0">
-              <h1 className="mb-5" onClick={navtohome}>
-                Curify
-              </h1>
-              <div className="navigate d-flex flex-column align-items-start justify-content-evenly ">
-                <div className="navlink ps-xl-3 ps-lg-3 ps-1">
-                  <h4> Dashboard </h4>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div
-            id="main-content"
-            className=" py-4 col-xl-10 col-lg-10 col-9 d-flex flex-column align-items-center justify-content-center"
-          >
-            <h3 className="mt-2">Patients</h3>
-            {Object.keys(patients).map((key) => (
-              <div className=" user-box d-flex flex-row align-items-center justify-content-between py-2">
-                <h3 className="px-2">{patients[key].name}</h3>
-                <div>
-                  <button
-                    type="button"
-                    className="btn button"
-                    data-bs-toggle="modal"
-                    data-bs-target="#exampleModal"
-                    onClick={() => dyntext(patients[key]._id)}
-                  >
-                    View prescription
-                  </button>
-                  <button
-                    type="button"
-                    className="btn button ms-3"
-                    onClick={() => deliver(patients[key]._id)}
-                  >
-                    Deliver
-                  </button>
-                </div>
-              </div>
-            ))}
-
-            <div
-              className="modal "
-              id="exampleModal"
-              tabindex="-1"
-              aria-labelledby="exampleModalLabel"
-              aria-hidden="true"
-            >
-              <div className="modal-dialog">
-                <div className="modal-content">
-                  <div className="modal-header">
-                    <h5 className="modal-title" id="exampleModalLabel">
-                      Prescription
-                    </h5>
-                    <button
-                      type="button"
-                      className="btn-close"
-                      data-bs-dismiss="modal"
-                      aria-label="Close"
-                    ></button>
-                  </div>
-                  <div className="modal-body">
-                    <h4 id="precname">Medicine name - Quantity</h4>
-                  </div>
-                  <div className="modal-footer">
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      data-bs-dismiss="modal"
-                    >
-                      Close
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <h3 className="mt-2">Medicines</h3>
-            <button
-              type="button"
-              className="btn button"
-              data-bs-toggle="modal"
-              data-bs-target="#exampleModal2"
-            >
-              Add medicine
-            </button>
-            {Object.keys(medicine).map((key) => (
-              <>
-                {medicine[key] > 0 ? (
-                  <div className=" user-box d-flex flex-row align-items-center justify-content-between py-2">
-                    <h3 className="px-2">{key}</h3>
-                    <h3 className="px-2">{medicine[key]}</h3>
-                  </div>
-                ) : null}
-              </>
-            ))}
-
-            <div
-              className="modal "
-              id="exampleModal2"
-              tabindex="-1"
-              aria-labelledby="exampleModalLabel2"
-              aria-hidden="true"
-            >
-              <div className="modal-dialog">
-                <div className="modal-content">
-                  <div className="modal-header">
-                    <h5 className="modal-title" id="exampleModalLabel2">
-                      Medicine
-                    </h5>
-                    <button
-                      type="button"
-                      className="btn-close"
-                      data-bs-dismiss="modal"
-                      aria-label="Close"
-                    ></button>
-                  </div>
-                  <div className="modal-body">
-                    <div className="mb-3">
-                      <label htmlFor="medname" className="form-label">
-                        Name
-                      </label>
-                      <input type="text" className="form-control" id="medname" />
-                    </div>
-                    <div className="mb-3">
-                      <label htmlFor="quantity" className="form-label">
-                        Quantity
-                      </label>
-                      <input type="number" className="form-control" id="quantity" />
-                    </div>
-                  </div>
-                  <div className="modal-footer">
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      data-bs-dismiss="modal"
-                    >
-                      Close
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-primary"
-                      onClick={medadder}
-                    >
-                      Save changes
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default PharmacyDash;
+  return <Workspace title="Dispensing" intro="Prescriptions routed to this pharmacy, and the stock they draw from.">
+    {notice && <p className={`notice ${notice.ok ? 'notice-ok' : 'notice-error'}`} role={notice.ok ? 'status' : 'alert'}>{notice.text}</p>}
+    <Section id="queue-heading" title="Waiting to collect">
+      <ListState {...queue} empty={!queue.data.length} emptyText="No prescriptions are waiting." onRetry={queue.reload}>
+        <ul className="rows">
+          {queue.data.flatMap(patient => patient.prescriptions.map(prescription => <li key={prescription._id} className="row">
+            <div><strong>{patient.name}</strong><span className="muted">{prescription.Quantity} × {prescription.Medicine} · prescribed by {prescription.doctorName}</span></div>
+            <div className="actions"><button type="button" className="button" onClick={() => dispense(patient, prescription)}>Dispense</button></div>
+          </li>))}
+        </ul>
+      </ListState>
+    </Section>
+    <Section id="stock-heading" title="Stock">
+      <StockForm onAdded={stock.reload}/>
+      <ListState {...stock} empty={!stock.data.length} emptyText="No stock recorded yet." onRetry={stock.reload}>
+        <table className="table">
+          <thead><tr><th scope="col">Medicine</th><th scope="col" className="num">Units</th></tr></thead>
+          <tbody>{stock.data.map(([name, count]) => <tr key={name}><td>{name}</td><td className="num">{count}</td></tr>)}</tbody>
+        </table>
+      </ListState>
+    </Section>
+  </Workspace>;
+}

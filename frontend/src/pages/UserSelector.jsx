@@ -1,61 +1,27 @@
-import "../../node_modules/bootstrap/dist/css/bootstrap.min.css";
-import "../styles/userStyle.scss";
-import { useNavigate } from "react-router-dom";
+import {Link} from 'react-router-dom';
 
-const UserSelector = () => {
-  
+const roles = [
+  ['/patientlogin', 'Patient', 'Book visits, see prescriptions and lab results.'],
+  ['/doctorlogin', 'Doctor', 'Confirm visits, prescribe and request tests.'],
+  ['/pharmacylogin', 'Pharmacy', 'Dispense assigned prescriptions and keep stock.'],
+  ['/lablogin', 'Laboratory', 'File results for the tests routed to you.'],
+];
 
-  let navigate = useNavigate();
-  const navpatient = () => {
-    navigate("/patientlogin");
-  };
-  const navdoc = () => {
-    navigate("/doctorlogin");
-  };
-  const navpharm = () => {
-    navigate("/pharmacylogin");
-  };
-  const navlab = () => {
-    navigate("/lablogin");
-  };
-  const navadmin = () => {
-    navigate("/adminlogin");
-  };
-  return (
-    <div className="user-main d-flex flex-column justify-content-evenly align-items-center ">
-      <h1>Login</h1>
-      <div className=" user-contain d-flex flex-column flex-xl-row flex-lg-row align-items-center justify-content-evenly">
-        <div
-          className="circle-contain d-flex flex-column align-items-center justify-content-evenly"
-          onClick={navpatient}
-        >
-          <div className="circle" id="patient"></div>
-          <h3>Patient</h3>
-        </div>
-        <div
-          className="circle-contain d-flex flex-column align-items-center justify-content-evenly"
-          onClick={navdoc}
-        >
-          <div className="circle" id="doctor"></div>
-          <h3>Doctor</h3>
-        </div>
-        <div
-          className="circle-contain d-flex flex-column align-items-center justify-content-evenly"
-          onClick={navpharm}
-        >
-          <div className="circle" id="pharmacy"></div>
-          <h3>Pharmacy</h3>
-        </div>
-        <div
-          className="circle-contain d-flex flex-column align-items-center justify-content-evenly"
-          onClick={navlab}
-        >
-          <div className="circle" id="lab"></div>
-          <h3>Laboratory</h3>
-        </div>
-      </div>
-      <h4 onClick={navadmin}>Login as Administrator</h4>
+export default function UserSelector() {
+  return <main className="entry">
+    <div className="entry-intro">
+      <p className="eyebrow">Curify clinic portal</p>
+      <h1>Who is signing in?</h1>
+      <p>Each role sees only the records it needs for its step of the visit.</p>
     </div>
-  );
-};
-export default UserSelector;
+    <ul className="role-list">
+      {roles.map(([to, label, detail]) => <li key={to}>
+        <Link className="role-link" to={to}>
+          <span className="role-name">{label}</span>
+          <span className="role-detail">{detail}</span>
+        </Link>
+      </li>)}
+    </ul>
+    <p className="entry-admin"><Link to="/adminlogin">Clinic administrator sign-in</Link></p>
+  </main>;
+}

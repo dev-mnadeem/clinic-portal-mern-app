@@ -1,137 +1,43 @@
-import { API_BASE } from "../api/session";
-import "../../node_modules/bootstrap/dist/css/bootstrap.min.css";
-import "../styles/LoginStyle.scss";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import {useState} from 'react';
+import {Link, useNavigate} from 'react-router-dom';
+import axios from 'axios';
+import {API_BASE} from '../api/session';
+import {errorMessage} from '../api/clinic';
 
-const Login = (props) => {
-  let navigate = useNavigate();
+const destinations = {Patients:'/pat', Doctors:'/doc', Labs:'/lab', Pharmacies:'/pharm', Admin:'/admin'};
+const titles = {Patients:'Patient', Doctors:'Doctor', Labs:'Laboratory', Pharmacies:'Pharmacy', Admin:'Administrator'};
 
-  const navreset = () => {
-    navigate("/pass", {
-      state: {
-        type: props.heading,
-      },
-    });
-  };
-  const navtodoc = (user) => {
-    navigate("/doc", {
-      state: {
-        user: user,
-      },
-    });
-  };
+export default function Login({heading}) {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
 
-  const navtopat = (user) => {
-    navigate("/pat", {
-      state: {
-        user: user,
-      },
-    });
-  };
-
-  const navtolab = (user) => {
-    navigate("/lab", {
-      state: {
-        user: user,
-      },
-    });
-  };
-  const navtopharm = (user) => {
-    navigate("/pharm", {
-      state: {
-        user: user,
-      },
-    });
-  };
-  const navtoadmin = (user) => {
-    navigate("/register", {
-      state: {
-        user: user,
-      },
-    });
-  };
-
-  const signIn = async () => {
-    let user;
+  async function submit(event) {
+    event.preventDefault();
+    setError('');
+    setBusy(true);
     try {
-      let type = props.heading;
-      let email = document.getElementById("email").value;
-      let password = document.getElementById("password").value;
-      const response = await axios.post(
-        `${API_BASE}/api/${type}/login`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          data: {
-            email: email,
-            password: password,
-          },
-        }
-      );
-      user = response.data;
-    } catch (error) {
-      console.error(error);
-    } finally {
-      if (props.heading === "Doctors") {
-        if (user && user._id) {
-          navtodoc(user);
-        }
-      }
-      if (props.heading === "Patients") {
-        if (user && user._id) {
-          navtopat(user);
-        }
-      }
-      if (props.heading === "Labs") {
-        if (user && user._id) {
-          navtolab(user);
-        }
-      }
-      if (props.heading === "Pharmacies") {
-        if (user && user._id) {
-          navtopharm(user);
-        }
-      }
-      if (props.heading === "Admin") {
-        if (user && user._id) {
-          navtoadmin(user);
-        }
-      }
+      await axios.post(`${API_BASE}/api/${heading}/login`, {data:{email, password}});
+      navigate(destinations[heading]);
+    } catch (failure) {
+      setError(errorMessage(failure, 'Could not reach the clinic service. Try again shortly.'));
+      setBusy(false);
     }
-  };
-  return (
-    <div id="login-page">
-      <form className="d-flex flex-column align-items-center justify-content-evenly">
-        <h1>{props.heading} Login</h1>
-        <div className="form-group">
-          <label htmlFor="exampleInputEmail1">Email address</label>
-          <input
-            type="email"
-            className="form-control"
-            aria-describedby="emailHelp"
-            placeholder="Enter email"
-            id="email"
-            name="email"
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="exampleInputPassword1">Password</label>
-          <input
-            type="password"
-            className="form-control"
-            placeholder="Password"
-            id="password"
-            name="password"
-          />
-        </div>
-        <p onClick={navreset}>Forgot password reset it here</p>
-        <button type="button" className="btn login-button" onClick={signIn}>
-          Login
-        </button>
-      </form>
-    </div>
-  );
-};
-export default Login;
+  }
+
+  return <main className="entry entry-narrow">
+    <p className="eyebrow"><Link to="/">All roles</Link></p>
+    <h1>{titles[heading]} sign-in</h1>
+    <form className="stack" onSubmit={submit}>
+      <label htmlFor="email">Email address</label>
+      <input id="email" type="email" autoComplete="username" required value={email} onChange={event => setEmail(event.target.value)}/>
+      <label htmlFor="password">Password</label>
+      <input id="password" type="password" autoComplete="current-password" required value={password} onChange={event => setPassword(event.target.value)}/>
+      {error && <p className="notice notice-error" role="alert">{error}</p>}
+      <button className="button" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
+    </form>
+    <p className="hint">Forgotten passwords are reset by the clinic administrator.</p>
+  </main>;
+}
