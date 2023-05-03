@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import Patient from "./patientModel.js";
 const reportSchema = new mongoose.Schema({
   patientId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -9,7 +8,6 @@ const reportSchema = new mongoose.Schema({
   LabId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Laboratory",
-    // required: true,
   },
   Type: {
     type: String,

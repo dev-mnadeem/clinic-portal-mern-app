@@ -3,165 +3,97 @@ import Doctor from "../models/DoctorModel.js";
 import Appointment from "../models/AppointmentModel.js";
 import Prescription from "../models/prescriptionModel.js";
 import Report from "../models/reportModel.js";
-const getPatientById = async (req, res) => {
+
+// The access layer pins patientId, userID and email to the signed-in patient,
+// so every query below is scoped to req.actor.id.
+
+const getPatientById = async (req, res, next) => {
   try {
-    const patientId = req.actor.id;
-    const patient = await Patient.findById(patientId);
-    if (!patient) {
-      return res.status(404).json({ error: "Patient not found" });
-    }
-    res.status(200).json(patient);
+    const patient = await Patient.findById(req.actor.id);
+    if (!patient) return res.status(404).json({ error: "Patient not found" });
+    res.json(patient);
   } catch (error) {
-    console.error("Error getting patient:", error);
-    res.status(500).json({ error: "Internal server error" });
+    next(error);
   }
 };
 
-const updatePatient = async (req, res) => {
+const getPatientByEmail = async (req, res, next) => {
   try {
-    // Find user based on email
-    const user = await Patient.findOne({ email: req.body.email });
+    res.json(await Patient.find({ _id: req.actor.id }));
+  } catch (error) {
+    next(error);
+  }
+};
 
-    // If user not found, return an error response
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Update user fields if they are present in the request body
-    if (req.body.name) {
-      user.name = req.body.name;
-    }
-
+const updatePatient = async (req, res, next) => {
+  try {
     if (req.body.password !== undefined) {
-      return res.status(400).json({error:'Use changePass with your current password'});
+      return res.status(400).json({ error: "Use changePass with your current password" });
     }
-
-    if (req.body.disease) {
-      user.disease = req.body.disease;
-    }
-
-    if (req.body.age) {
-      user.age = req.body.age;
-    }
-
-    if (req.body.phone) {
-      user.phone = req.body.phone;
-    }
-
-    if (req.body.address) {
-      user.address = req.body.address;
-    }
-
-    // Save updated user to database
-    await user.save();
-
-    // Return success response
-    return res.status(200).json({ message: "User updated successfully" });
+    const patient = await Patient.findById(req.actor.id);
+    if (!patient) return res.status(404).json({ error: "Patient not found" });
+    const { name, disease, age, phone, address } = req.body;
+    if (name) patient.name = name;
+    if (disease !== undefined) patient.disease = disease;
+    if (age !== undefined && age !== "") patient.age = age;
+    if (phone) patient.phoneNumber = phone;
+    if (address !== undefined) patient.address = address;
+    await patient.save();
+    res.json({ message: "Profile updated", user: patient });
   } catch (error) {
-    // Handle any errors that occur during the update process
-    console.error(error);
-    return res.status(500).json({ message: "Internal server error" });
+    if (error.name === "ValidationError") return res.status(400).json({ error: error.message });
+    next(error);
   }
 };
 
-const getPatientByEmail = async (req, res) => {
+const addAppointment = async (req, res, next) => {
   try {
-    const email = req.body.email;
-    const patient = await Patient.find({ email: email });
-    if (!patient) {
-      return res.status(404).json({ error: "Patient not found" });
+    const { doctorId, reason, datetime } = req.body.data || {};
+    if (!doctorId || typeof reason !== "string" || !reason.trim() || typeof datetime !== "string" || !datetime) {
+      return res.status(400).json({ error: "Choose a doctor, a date and a reason" });
     }
-    res.status(200).json(patient);
+    const [patient, doctor] = await Promise.all([Patient.findById(req.actor.id), Doctor.findById(doctorId)]);
+    if (!patient || !doctor) return res.status(404).json({ error: "Doctor not found" });
+    const appointment = await Appointment.create({
+      doctorId: doctor._id,
+      patientId: patient._id,
+      dateTime: datetime,
+      patientName: patient.name,
+      reason: reason.trim(),
+      doctorName: doctor.name,
+    });
+    res.status(201).json(appointment);
   } catch (error) {
-    console.error("Error getting patient:", error);
-    res.status(500).json({ error: "Internal server error" });
+    next(error);
   }
 };
-const addAppointment = async (req, res) => {
+
+const myPrescription = async (req, res, next) => {
   try {
-    const { doctorId, patientId, reason, datetime } = req.body.data;
-    if (!doctorId || !patientId || !reason || !datetime) {
-      return res.status(400).json("Err: Expected all parameters");
-    } else {
-      const PatientObj = await Patient.findById(patientId);
-      const DoctorObj = await Doctor.findById(doctorId);
-      if (!PatientObj || !DoctorObj) {
-        return res.status(400).json("Err: Incorrect Patient or Doctor ID");
-      } else {
-        const newApp = new Appointment({
-          doctorId: doctorId,
-          patientId: patientId,
-          dateTime: datetime,
-          patientName: PatientObj.name,
-          reason: reason,
-          doctorName: DoctorObj.name,
-        });
-        await newApp.save();
-        return res.status(200).json(newApp);
-      }
-    }
+    res.json({ Prescription: await Prescription.find({ patientId: req.actor.id }) });
   } catch (error) {
-    console.error("Error getting patient:", error);
-    res.status(500).json({ error: "Internal server error" });
+    next(error);
   }
 };
-const myPrescription = async (req, res) => {
+
+// Pending requests are returned too, flagged by Accepted, so a patient can see
+// that a booking is waiting for the doctor rather than assume it was lost.
+const getAllAppointments = async (req, res, next) => {
   try {
-    const patientId = req.body.data.userID;
-    if (!patientId) {
-      return res.status(400).json("Err: Expected all parameters");
-    } else {
-      const PatientObj = await Patient.findById(patientId);
-      if (!PatientObj) {
-        return res.status(400).json("Err: Incorrect Patient ID");
-      } else {
-        const pres = await Prescription.find({ patientId: patientId });
-        return res.status(200).json({ Prescription: pres });
-      }
-    }
+    res.json(await Appointment.find({ patientId: req.actor.id }).sort({ dateTime: 1 }));
   } catch (error) {
-    console.error("Error getting patient:", error);
-    res.status(500).json({ error: "Internal server error" });
+    next(error);
   }
 };
-const getAllAppointments = async (req, res) => {
+
+const getMyReport = async (req, res, next) => {
   try {
-    const userID = req.body.data.userID;
-    const user = await Patient.findById(userID);
-    if (!user) {
-      return res.status(401).send("Invalid credentials");
-    } else {
-      const Appointments = await Appointment.find({
-        patientId: userID,
-        Accepted: true,
-      });
-      return res.status(200).json(Appointments);
-    }
+    res.json(await Report.find({ patientId: req.actor.id }));
   } catch (error) {
-    console.error(error);
-    res.status(500).json({error:"Internal server error"});
+    next(error);
   }
 };
-const getMyReport = async (req, res) => {
-  try {
-    const { patientId } = req.body.data;
-    if (!patientId) {
-      return res.status(401).send("Invalid credentials");
-    } else {
-      const reports = await Report.find({
-        patientId: patientId,
-      });
-      if (!reports) {
-        return res.status(401).send("Invalid Report");
-      } else {
-        return res.status(200).json(reports);
-      }
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({error:"Internal server error"});
-  }
-};
+
 export {
   getPatientById,
   updatePatient,

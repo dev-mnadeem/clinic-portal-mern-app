@@ -1,208 +1,130 @@
 import Doctor from "../models/DoctorModel.js";
 import Patient from "../models/patientModel.js";
 import Appointment from "../models/AppointmentModel.js";
-import Laboratory from "../models/LaboratoryModel.js";
 import Prescription from "../models/prescriptionModel.js";
 import Report from "../models/reportModel.js";
 
+// The access layer pins doctorId/userID to the signed-in doctor and checks that
+// any AppID, reportId or patientId in the body belongs to one of their
+// appointments, so these handlers can use req.actor.id directly.
 
-const DoctorbyID = async (req, res) => {
+const DoctorbyID = async (req, res, next) => {
   try {
-    const userID = req.body.userID;
-    const user = await Doctor.findById(userID);
-    if (!user) {
-      return res.status(401).send("Invalid credentials");
-    } else {
-      res.status(200).json(user);
-    }
+    const doctor = await Doctor.findById(req.actor.id);
+    if (!doctor) return res.status(404).json({ error: "Doctor not found" });
+    res.json(doctor);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({error:"Internal server error"});
+    next(error);
   }
 };
-const getAllPendingAppointments = async (req, res) => {
-  try {
-    const userID = req.body.data.userID;
-    const user = await Doctor.findById(userID);
-    if (!user) {
-      return res.status(401).send("Invalid credentials");
-    } else {
-      const Appointments = await Appointment.find({
-        doctorId: userID,
-        Accepted: false,
-      });
 
-      // let i=0
-      // user.appointments.forEach(async element => {
-      //     let temp=await Appointment.findById(element)
-      //     if (!temp.rejected){
-      //         Appointments[i]=temp;
-      //         i++;
-      //     }
-      // });
-      return res.status(200).json(Appointments);
+function appointmentsWhere(Accepted) {
+  return async (req, res, next) => {
+    try {
+      res.json(await Appointment.find({ doctorId: req.actor.id, Accepted }));
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({error:"Internal server error"});
-  }
-};
-const getAllAcceptedAppointments = async (req, res) => {
-  try {
-    const userID = req.body.data.userID;
-    const user = await Doctor.findById(userID);
-    if (!user) {
-      return res.status(401).send("Invalid credentials");
-    } else {
-      const Appointments = await Appointment.find({
-        doctorId: userID,
-        Accepted: true,
-      });
+  };
+}
 
-      // let i=0
-      // user.appointments.forEach(async element => {
-      //     let temp=await Appointment.findById(element)
-      //     if (!temp.rejected){
-      //         Appointments[i]=temp;
-      //         i++;
-      //     }
-      // });
-      return res.status(200).json(Appointments);
-    }
+const rejectAppointments = async (req, res, next) => {
+  try {
+    const appointment = await Appointment.findOneAndDelete({ _id: req.body.data?.AppID, doctorId: req.actor.id, Accepted: false });
+    if (!appointment) return res.status(404).json({ error: "Pending appointment not found" });
+    res.json({ message: "Appointment rejected" });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({error:"Internal server error"});
+    next(error);
   }
 };
-const rejectAppointments = async (req, res) => {
-  try {
-    const AppID = req.body.data.AppID;
-    const App = await Appointment.findByIdAndDelete(AppID);
-    if (!App) {
-      return res.status(401).send("Invalid value");
-    } else {
-      return res.status(200).json({message: "Updated successfully"});
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({error:"Internal server error"});
-  }
-};
-const acceptAppointments = async (req, res) => {
-  try {
-    const AppID = req.body.data.AppID;
 
-    const App = await Appointment.findById(AppID);
-    if (!App) {
-      return res.status(401).send("Invalid value");
-    } else {
-      App.Accepted = true;
-      App.save();
-      return res.status(200).json({message: "Updated successfully"});
-    }
+const acceptAppointments = async (req, res, next) => {
+  try {
+    const appointment = await Appointment.findOneAndUpdate(
+      { _id: req.body.data?.AppID, doctorId: req.actor.id },
+      { $set: { Accepted: true } },
+      { new: true },
+    );
+    if (!appointment) return res.status(404).json({ error: "Appointment not found" });
+    res.json({ message: "Appointment accepted", appointment });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({error:"Internal server error"});
+    next(error);
   }
 };
-const addPrescription = async (req, res) => {
-  try {
-    const { Med, patientId, quantity, doctorId } = req.body.data;
-    if (Med === null || patientId === null || quantity === null) {
-      return res.status(401).send("Invalid value");
-    } else {
-      const PatientObj = await Patient.findById(patientId);
-      const DoctorObj = await Doctor.findById(doctorId);
-      if (!PatientObj || !DoctorObj) {
-        return res.status(401).send("Invalid Parameters Entered");
-      } else {
-        const newPres = new Prescription({
-          doctorId: doctorId,
-          patientId: patientId,
-        });
-        newPres.Medicine = Med;
-        newPres.Quantity = quantity;
-        newPres.doctorName = DoctorObj.name;
-        await newPres.save();
-        return res.status(200).json({
-          message: "Medcine Added",
-          user: PatientObj,
-          Prescription: newPres,
-        });
-      }
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({error:"Internal server error"});
-  }
-};
-const addReport = async (req, res) => {
-  try {
-    const { reporttype, patientId, doctorId } = req.body.data;
 
-    if (reporttype === null || patientId === null || doctorId === null) {
-      return res.status(401).send("Invalid value");
-    } else {
-      const PatientObj = await Patient.findById(patientId);
-      const DoctorObj = await Doctor.findById(doctorId);
-      if (!PatientObj || !DoctorObj) {
-        return res.status(401).send("Invalid Patient OR Doctor");
-      } else {
-        const newRep = new Report({
-          Type: reporttype,
-          patientId: patientId,
-          doctorId: doctorId,
-          patientName: PatientObj.name,
-        });
-        await newRep.save();
-        return res.status(201).json(newRep);
-      }
+const addPrescription = async (req, res, next) => {
+  try {
+    const { Med, patientId } = req.body.data || {};
+    const quantity = Number(req.body.data?.quantity);
+    if (typeof Med !== "string" || !Med.trim() || /[.$]/.test(Med) || !Number.isInteger(quantity) || quantity <= 0 || !patientId) {
+      return res.status(400).json({ error: "Supply a medicine name, a positive whole quantity and a patient" });
     }
+    const [patient, doctor] = await Promise.all([Patient.findById(patientId), Doctor.findById(req.actor.id)]);
+    if (!patient || !doctor) return res.status(404).json({ error: "Patient or doctor not found" });
+    const prescription = await Prescription.create({
+      doctorId: doctor._id,
+      patientId: patient._id,
+      Medicine: Med.trim(),
+      Quantity: quantity,
+      doctorName: doctor.name,
+    });
+    res.status(201).json({ message: "Prescription added", Prescription: prescription });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({error:"Internal server error"});
+    next(error);
   }
 };
-const getPatientReport = async (req, res) => {
+
+const addReport = async (req, res, next) => {
+  try {
+    const { reporttype, patientId } = req.body.data || {};
+    if (typeof reporttype !== "string" || !reporttype.trim() || !patientId) {
+      return res.status(400).json({ error: "Supply a test type and a patient" });
+    }
+    const patient = await Patient.findById(patientId);
+    if (!patient) return res.status(404).json({ error: "Patient not found" });
+    const report = await Report.create({
+      Type: reporttype.trim(),
+      patientId: patient._id,
+      doctorId: req.actor.id,
+      patientName: patient.name,
+    });
+    res.status(201).json(report);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getPatientReport = async (req, res, next) => {
   try {
     const patientId = req.body.data;
-    if (!patientId) {
-      return res.status(401).send("Invalid credentials");
-    } else {
-      const reports = await Report.find({
-        patientId: patientId,
-      });
-      if (!reports) {
-        return res.status(401).send("Invalid Report");
-      } else {
-        return res.status(200).json(reports);
-      }
-    }
+    if (typeof patientId !== "string" || !patientId) return res.status(400).json({ error: "patientId is required" });
+    res.json(await Report.find({ patientId }));
   } catch (error) {
-    console.error(error);
-    res.status(500).json({error:"Internal server error"});
+    next(error);
   }
 };
-const addReportRemarks = async (req, res) => {
+
+const addReportRemarks = async (req, res, next) => {
   try {
-    const { Remarks, reportId } = req.body.data;
-    if (!reportId || Remarks) {
-      return res.status(401).send("Missing Values");
-    } else {
-      const reports = await Report.findById(reportId);
-      if (!reports) {
-        return res.status(401).send("Invalid Report");
-      } else {
-        reports.doctorRemarks = Remarks;
-        await reports.save();
-        return res.status(200).json(reports);
-      }
+    const { Remarks, reportId } = req.body.data || {};
+    if (!reportId || typeof Remarks !== "string" || !Remarks.trim()) {
+      return res.status(400).json({ error: "Supply a report and remarks" });
     }
+    const report = await Report.findOneAndUpdate(
+      { _id: reportId, doctorId: req.actor.id },
+      { $set: { doctorRemarks: Remarks.trim() } },
+      { new: true },
+    );
+    if (!report) return res.status(404).json({ error: "Report not found" });
+    res.json(report);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({error:"Internal server error"});
+    next(error);
   }
 };
+
+const getAllPendingAppointments = appointmentsWhere(false);
+const getAllAcceptedAppointments = appointmentsWhere(true);
+
 export {
   DoctorbyID,
   getAllPendingAppointments,

@@ -86,7 +86,7 @@ export function roleAccess(role) {
         if (['/addreports','/addreportremarks'].includes(path)) {
           if (!data?.reportId || !await Report.exists({_id:data.reportId,LabId:req.actor.id})) return forbidden(res);
         }
-        const patientId = data?.patientId || req.body.patientId;
+        const patientId = data?.patientId || req.body.patientId || req.query.patientId;
         if (patientId && !await Report.exists({patientId,LabId:req.actor.id})) return forbidden(res);
       } else if (role === 'pharmacy') {
         const paths = ['/changepass','/pharmbyid','/getclientprescription','/getallmedicine','/addmedicine','/delivermedicine','/patients'];

@@ -13,8 +13,6 @@ import {
 const router = express.Router();
 router.post('/login', rateLimit({windowMs:15 * 60 * 1000, limit:20, standardHeaders:'draft-7', legacyHeaders:false}), signIn('pharmacy'));
 router.use(roleAccess('pharmacy'));
-
-
 router.post('/changePass', changeOwnPassword('pharmacy'));
 router.get("/PharmbyID", PharmbyID);
 router.post("/getClientPrescription", getClientPrescription);

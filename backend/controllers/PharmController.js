@@ -3,60 +3,35 @@ import Patient from "../models/patientModel.js";
 import Pharmacy from "../models/PharmacyModel.js";
 import Prescription from "../models/prescriptionModel.js";
 
+const PharmbyID = async (req, res, next) => {
+  try {
+    const pharmacy = await Pharmacy.findById(req.actor.id);
+    if (!pharmacy) return res.status(404).json({ error: "Pharmacy not found" });
+    res.json(pharmacy);
+  } catch (error) {
+    next(error);
+  }
+};
 
-const PharmbyID = async (req, res) => {
+const getClientPrescription = async (req, res, next) => {
   try {
-    const userID = req.body.userID;
-    const user = await Pharmacy.findById(userID);
-    if (!user) {
-      return res.status(401).send("Invalid credentials");
-    } else {
-      res.status(200).json(user);
-    }
+    const patientId = req.body.data?.patientId;
+    if (!patientId) return res.status(400).json({ error: "patientId is required" });
+    if (!await Patient.exists({ _id: patientId })) return res.status(404).json({ error: "Patient not found" });
+    const pres = await Prescription.find({ pharmacyId: req.actor.id, patientId, delivered: false });
+    res.json({ Prescription: pres });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({error:"Internal server error"});
+    next(error);
   }
 };
-const getClientPrescription = async (req, res) => {
+
+const getAllMedicine = async (req, res, next) => {
   try {
-    const { patientId } = req.body.data;
-    if (!patientId) {
-      return res.status(400).json("Err: Expected all parameters");
-    } else {
-      const PatientObj = await Patient.findById(patientId);
-      if (!PatientObj) {
-        return res.status(400).json("Err: Incorrect Patient ID");
-      } else {
-        const pres = await Prescription.find({
-          pharmacyId: req.actor.id,
-          patientId: patientId,
-          delivered: false,
-        });
-        return res.status(200).json({ Prescription: pres });
-      }
-    }
+    const pharmacy = await Pharmacy.findById(req.actor.id);
+    if (!pharmacy) return res.status(404).json({ error: "Pharmacy not found" });
+    res.json(pharmacy.medicines);
   } catch (error) {
-    console.error("Error getting patient:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
-const getAllMedicine = async (req, res) => {
-  try {
-    const { PharmId } = req.body.data;
-    if (!PharmId) {
-      return res.status(400).json("Err: Expected all parameters");
-    } else {
-      const PharmObj = await Pharmacy.findById(PharmId);
-      if (!PharmObj) {
-        return res.status(400).json("Err: Incorrect Pharm ID");
-      } else {
-        return res.status(200).json(PharmObj.medicines);
-      }
-    }
-  } catch (error) {
-    console.error("Error getting patient:", error);
-    res.status(500).json({ error: "Internal server error" });
+    next(error);
   }
 };
 const addMedicine = async (req, res) => {

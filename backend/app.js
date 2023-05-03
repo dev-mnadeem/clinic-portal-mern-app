@@ -22,6 +22,8 @@ app.use("*", (req, res) => {
 
 app.use((error, req, res, next) => {
   if (res.headersSent) return next(error);
+  if (error.name === 'CastError') return res.status(400).json({error:'Invalid record identifier'});
+  if (error.expose && error.status >= 400 && error.status < 500) return res.status(error.status).json({error:error.message});
   console.error('Clinic request failed:', error.name);
   res.status(500).json({error:'Internal server error'});
 });
