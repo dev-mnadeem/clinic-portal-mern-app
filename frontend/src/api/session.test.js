@@ -1,7 +1,7 @@
 import axios from 'axios';
 import {API_BASE, currentSession, clearSession} from './session';
 
-jest.mock('axios', () => ({interceptors:{request:{use:jest.fn()}, response:{use:jest.fn()}}}));
+vi.mock('axios', () => ({default:{interceptors:{request:{use:vi.fn()}, response:{use:vi.fn()}}}}));
 const requestHandler = axios.interceptors.request.use.mock.calls[0][0];
 const responseHandler = axios.interceptors.response.use.mock.calls[0][0];
 beforeEach(() => sessionStorage.clear());

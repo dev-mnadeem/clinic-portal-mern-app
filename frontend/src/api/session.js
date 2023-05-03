@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const API_BASE = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+export const API_BASE = (import.meta.env.REACT_APP_API_URL || 'http://localhost:5000').replace(/\/$/, '');
 const key = 'clinic-session';
 export function currentSession() {
   try {return JSON.parse(sessionStorage.getItem(key) || 'null');} catch {return null;}

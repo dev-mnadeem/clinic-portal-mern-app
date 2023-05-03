@@ -16,12 +16,9 @@ function RequireRole({role, children}) {
   return currentSession()?.role === role ? children : <Navigate to="/" replace />;
 }
 
-// Opt in to React Router 7 behaviour now so the eventual upgrade is a no-op.
-const routerFuture = {v7_startTransition:true, v7_relativeSplatPath:true};
-
 function App() {
   return (
-    <Router future={routerFuture}>
+    <Router>
       <Routes>
         <Route path="/" element={<UserSelector />} />
         <Route path="/admin" element={<RequireRole role="admin"><AdminDash /></RequireRole>} />

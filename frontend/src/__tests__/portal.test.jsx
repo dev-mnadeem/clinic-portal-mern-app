@@ -6,13 +6,12 @@ import Login from '../pages/Login';
 import Patientdash from '../pages/patientdash';
 import AssignmentDesk from '../components/AssignmentDesk';
 
-jest.mock('axios', () => ({
-  get:jest.fn(),
-  post:jest.fn(),
-  interceptors:{request:{use:jest.fn()}, response:{use:jest.fn()}},
-}));
+vi.mock('axios', () => ({default:{
+  get:vi.fn(),
+  post:vi.fn(),
+  interceptors:{request:{use:vi.fn()}, response:{use:vi.fn()}},
+}}));
 
-const future = {v7_startTransition:true, v7_relativeSplatPath:true};
 const reply = data => Promise.resolve({data});
 function routeBy(table) {
   return url => {
@@ -24,13 +23,13 @@ function routeBy(table) {
 }
 
 beforeEach(() => {
-  jest.resetAllMocks();
+  vi.resetAllMocks();
   sessionStorage.setItem('clinic-session', JSON.stringify({token:'test', role:'patient', user:{name:'Avery Fictional'}}));
 });
 
 test('login shows the server error and stays on the form', async () => {
   axios.post.mockRejectedValue({response:{status:401, data:{error:'Invalid email or password'}}});
-  render(<MemoryRouter future={future}><Login heading="Patients"/></MemoryRouter>);
+  render(<MemoryRouter><Login heading="Patients"/></MemoryRouter>);
   await userEvent.type(screen.getByLabelText('Email address'), 'avery@clinic.example.test');
   await userEvent.type(screen.getByLabelText('Password'), 'wrong-password');
   await userEvent.click(screen.getByRole('button', {name:'Sign in'}));
@@ -40,7 +39,7 @@ test('login shows the server error and stays on the form', async () => {
 
 test('a successful login opens the role workspace', async () => {
   axios.post.mockResolvedValue({data:{token:'t', role:'doctor', _id:'1'}});
-  render(<MemoryRouter future={future} initialEntries={['/doctorlogin']}><Routes>
+  render(<MemoryRouter initialEntries={['/doctorlogin']}><Routes>
     <Route path="/doctorlogin" element={<Login heading="Doctors"/>}/>
     <Route path="/doc" element={<p>doctor workspace</p>}/>
   </Routes></MemoryRouter>);
@@ -58,7 +57,7 @@ test('the patient record shows empty states and marks waiting appointments', asy
     'Patients/getMyReport':[],
   }));
   axios.get.mockImplementation(routeBy({'Patients/doctors':[]}));
-  render(<MemoryRouter future={future}><Patientdash/></MemoryRouter>);
+  render(<MemoryRouter><Patientdash/></MemoryRouter>);
   expect(await screen.findByText('Dr. Rowan Sample')).toBeInTheDocument();
   expect(screen.getByText('Waiting')).toBeInTheDocument();
   expect(await screen.findByText('No prescriptions on record.')).toBeInTheDocument();
@@ -75,7 +74,7 @@ test('a failed list load offers a retry', async () => {
     return url.endsWith('myPrescription') ? reply({Prescription:[]}) : reply([]);
   });
   axios.get.mockResolvedValue({data:[]});
-  render(<MemoryRouter future={future}><Patientdash/></MemoryRouter>);
+  render(<MemoryRouter><Patientdash/></MemoryRouter>);
   const alert = await screen.findByRole('alert');
   await userEvent.click(within(alert).getByRole('button', {name:'Try again'}));
   expect(await screen.findByText(/No appointments yet/)).toBeInTheDocument();
@@ -89,7 +88,7 @@ test('booking sends the chosen doctor, date and reason', async () => {
     'Patients/addAppointment':{_id:'new'},
   }));
   axios.get.mockImplementation(routeBy({'Patients/doctors':[{_id:'d1', name:'Dr. Rowan Sample', specification:'General practice'}]}));
-  render(<MemoryRouter future={future}><Patientdash/></MemoryRouter>);
+  render(<MemoryRouter><Patientdash/></MemoryRouter>);
   await userEvent.click(screen.getByRole('button', {name:'Book a visit'}));
   await userEvent.selectOptions(await screen.findByLabelText('Doctor'), 'd1');
   fireEvent.change(screen.getByLabelText('Preferred date'), {target:{value:'2099-04-02'}});
