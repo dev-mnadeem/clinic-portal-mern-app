@@ -95,8 +95,8 @@ const Register = () => {
               <div className="container-fluid">
                 <div className="row registry">
                   <div className="col-lg-3 col-xl-3 row user-side d-flex flex-column align-items-center justify-content-center">
-                    <div className="circle-contain d-flex flex-column align-items-center justify-content-evenly my-lg-0 my-xl-0 my-3">
-                      <div className="circle patient"></div>
+                    <div className="circle2-contain d-flex flex-column align-items-center justify-content-evenly my-lg-0 my-xl-0 my-3">
+                      <div className="circle2 patient"></div>
                       {patient ? <h3>Add Patient</h3> : null}
                       {doctor ? <h3>Add Doctor</h3> : null}
                       {lab ? <h3>Add Laboratory</h3> : null}
