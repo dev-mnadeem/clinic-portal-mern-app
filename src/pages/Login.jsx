@@ -33,11 +33,10 @@ const Login = (props) => {
             name="password"
           />
         </div>
-
+        <p onClick={navreset}>Forgot password reset it here</p>
         <button type="submit" className="btn login-button">
           Login
         </button>
-        <p onClick={navreset}>Forgot password reset it here</p>
       </form>
     </div>
   );
