@@ -119,6 +119,67 @@ const addLab = async (req, res) => {
       res.status(500).json({ error: 'Internal server error' });
     }
 }
+const delDoctor =  async (req,res)=>{
+    const  userId  = req.body.userId;
+
+    try {
+        const user = await Doctor.findByIdAndDelete(userId);
+        
+        if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+        }else{
+            await Appointment.deleteMany({doctorId:userId})
+        }
+        res.status(200).json({ message: 'User deleted successfully', user });
+    } catch (error) {
+        res.status(500).json({ message: 'Error deleting user', error });
+    }
+    
+}
+const delPatient =  async (req,res)=>{
+    const  userId  = req.body.userId;
+
+    try {
+        const user = await Patient.findByIdAndDelete(userId);
+        if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+        }else{
+            await Appointment.deleteMany({patientId:userId});
+            
+        }
+        res.status(200).json({ message: 'User deleted successfully', user });
+    } catch (error) {
+        res.status(500).json({ message: 'Error deleting user', error });
+    }
+    
+}
+const delPharmacy =  async (req,res)=>{
+    const  userId  = req.body.userId;
+
+    try {
+        const user = await Pharmacy.findByIdAndDelete(userId);
+        if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+        }
+        res.status(200).json({ message: 'User deleted successfully', user });
+    } catch (error) {
+        res.status(500).json({ message: 'Error deleting user', error });
+    }
+    
+}
+const delLab =  async (req,res)=>{
+    const  userId  = req.body.userId;
+
+    try {
+        const user = await Lab.findByIdAndDelete(userId);
+        if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+        }
+        res.status(200).json({ message: 'User deleted successfully', user });
+    } catch (error) {
+        res.status(500).json({ message: 'Error deleting user', error })
+    }
+}
 
 Router.post("/addPatient",addPatient)
 Router.post("/addPharmacy",addPharmacy)
@@ -128,10 +189,10 @@ Router.get("/getAllPatients",getAllPatients)
 Router.get("/getAllPharmacies",getAllPharmacies)
 Router.get("/getAllDoctors",getAllDoctors)
 Router.get("/getAllLabs",getAllLabs)
-Router.post("/delPatient")
-Router.post("/delDoctor")
-Router.post("/delPharmacy")
-Router.post("/delLab")
+Router.post("/delPatient",delPatient)
+Router.post("/delDoctor",delDoctor)
+Router.post("/delPharmacy",delPharmacy)
+Router.post("/delLab",delLab)
 Router.post("updatePatient")
 Router.post("updateDoctor")
 Router.post("updatePharmacy")
