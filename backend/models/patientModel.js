@@ -1,39 +1,42 @@
-import mongoose from 'mongoose';
-const patientSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true
+const patientSchema = new Schema({
+  name:{
+    type:String,
+    required : true
   },
-  // id: {
-  //   type: String,
-  //   required: true,
-  //   //unique: true
-  // },
   email: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
   },
   password: {
     type: String,
-    required: true
+    required: true,
   },
-  disease: {
-    type: String,
-    required: true
+  appointments: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'Appointment',
+    },
+  ],
+  prescriptions: {
+    type: Map,
+    of: Number,
   },
   age: {
     type: Number,
-    required: true
+    required: true,
   },
-  phone: {
+  disease: {
     type: String,
-    required: true
+  },
+  phoneNumber: {
+    type: String,
+    required: true,
   },
   address: {
     type: String,
-    required: true
-  }
+  },
 });
+
 const Patient = mongoose.model('Patient', patientSchema);
-export default Patient;
+export default Patient

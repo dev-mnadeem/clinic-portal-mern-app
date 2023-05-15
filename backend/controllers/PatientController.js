@@ -1,14 +1,6 @@
 import Patient from '../models/patientModel.js';
 import bcrypt from "bcrypt"
-const getAllPatients= async (req, res) => {
-    try {
-      const patients = await Patient.find();
-      res.status(200).json(patients);
-    } catch (error) {
-      console.error('Error getting patients:', error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  }
+
 
   const getPatientById= async (req, res) => {
     try {
