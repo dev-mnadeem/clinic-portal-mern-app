@@ -1,4 +1,5 @@
-const patientSchema = new Schema({
+import mongoose from "mongoose";
+const patientSchema = new mongoose.Schema({
   name:{
     type:String,
     required : true
@@ -11,16 +12,6 @@ const patientSchema = new Schema({
   password: {
     type: String,
     required: true,
-  },
-  appointments: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: 'Appointment',
-    },
-  ],
-  prescriptions: {
-    type: Map,
-    of: Number,
   },
   age: {
     type: Number,

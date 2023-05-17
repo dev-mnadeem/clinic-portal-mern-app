@@ -1,7 +1,8 @@
 import Patient from '../models/patientModel.js';
 import bcrypt from "bcrypt"
-
-
+import Doctor from "../models/DoctorModel.js"
+import Appointment from '../models/AppointmentModel.js';
+import Prescription from '../models/prescriptionModel.js';
   const getPatientById= async (req, res) => {
     try {
       const patientId = req.params.id;
@@ -16,54 +17,56 @@ import bcrypt from "bcrypt"
     }
   }
 
-  const addPatient = async (req, res) => {
+  const updatePatient = async (req, res) => {
     try {
       console.log(req.body)
-      
-      const { name, id, email, password, disease, age, phone, address } = req.body;
-      const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(password, saltRounds);
-      const existingPatient = await Patient.findOne({ email });
-      if (existingPatient) {
-        return res.status(409).json({ error: 'Email already in use' });
+      // Find user based on email
+      const user = await Patient.findOne({ email: req.body.email });
+  
+      // If user not found, return an error response
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
       }
-      const patient = new Patient({ name, id, email, password:hashedPassword, disease, age, phone, address });
-      await patient.save();
-      res.status(201).json({ message: 'Patient created successfully' });
+  
+      // Update user fields if they are present in the request body
+      if (req.body.name) {
+        user.name = req.body.name;
+      }
+  
+      if (req.body.password!== undefined) {
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(req.body.password, saltRounds);
+        user.password = hashedPassword;
+      }
+  
+      if (req.body.disease) {
+        user.disease = req.body.disease;
+      }
+  
+      if (req.body.age) {
+        user.age = req.body.age;
+      }
+  
+      if (req.body.phone) {
+        user.phone = req.body.phone;
+      }
+  
+      if (req.body.address) {
+        user.address = req.body.address;
+      }
+  
+      // Save updated user to database
+      await user.save();
+  
+      // Return success response
+      return res.status(200).json({ message: 'User updated successfully' });
     } catch (error) {
-      console.error('Error creating patient:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      // Handle any errors that occur during the update process
+      console.error(error);
+      return res.status(500).json({ message: 'Internal server error' });
     }
   }
 
-  const updatePatient= async (req, res) => {
-    try {
-      const patientId = req.params.id;
-      const { name, id, email, password, disease, age, phone, address } = req.body;
-      const patient = await Patient.findByIdAndUpdate(patientId, { name, id, email, password, disease, age, phone, address }, { new: true });
-      if (!patient) {
-        return res.status(404).json({ error: 'Patient not found' });
-      }
-      res.status(200).json(patient);
-    } catch (error) {
-      console.error('Error updating patient:', error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  }
-
- const deletePatient = async (req, res) => {
-    try {
-      const patientId = req.params.id;
-      const patient = await Patient.findByIdAndDelete(patientId);
-      if (!patient) {
-        return res.status(404).json({ error: 'Patient not found' });
-      }
-      res.status(200).json({ message: 'Patient deleted successfully' });
-    } catch (error) {
-      console.error('Error deleting patient:', error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  }
   const patientLogin = async (req,res)=>{
     try {
       const { email, password } = req.body;
@@ -96,22 +99,44 @@ import bcrypt from "bcrypt"
       res.status(500).json({ error: 'Internal server error' });
     }
   }
-  const patientSignUp = async(req,res)=>{
-    try {
-      const { name, id, email, password, disease, age, phone, address } = req.body;
-      const existingPatient = await Patient.findOne({ email });
-      if (existingPatient) {
-        return res.status(409).json({ error: 'Email already in use' });
+const addAppointment =async(req,res)=>{
+  try {
+    const {doctorId,patientId,reason,datetime}=req.body
+    if(!doctorId||!patientId||!reason||!datetime){
+      return res.status(400).json("Err: Expected all parameters")
+    }else{
+      const PatientObj=await Patient.findById(patientId);
+      const DoctorObj=await Doctor.findById(doctorId);
+      if(!PatientObj||!DoctorObj){
+        return res.status(400).json("Err: Incorrect Patient or Doctor ID")
+      }else{
+        const newApp= new Appointment({doctorId:doctorId,patientId:patientId,dateTime:datetime,patientName:PatientObj.name,reason:reason})
+        await newApp.save();
+        return res.status(200).json(newApp)
       }
-      const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(password, saltRounds);
-      const patient = new Patient({ name, id, email, password: hashedPassword, disease, age, phone, address });
-      await patient.save();
-      res.status(201).json({ message: 'Patient created successfully' });
-    } catch (error) {
-      console.error('Error creating patient:', error);
-      res.status(500).json({ error: 'Internal server error' });
     }
+  } catch (error) {
+    console.error('Error getting patient:', error);
+      res.status(500).json({ error: 'Internal server error' });
   }
-
-export {getAllPatients,getPatientById,addPatient,deletePatient,updatePatient,patientLogin,getPatientByEmail,patientSignUp};
+}
+const myPrescription = async(req,res)=>{
+  try {
+    const {patientId}= req.body;
+    if(!patientId){
+      return res.status(400).json("Err: Expected all parameters")
+    }else{
+      const PatientObj=await Patient.findById(patientId);
+      if(!PatientObj){
+        return res.status(400).json("Err: Incorrect Patient ID")
+      }else{
+        const pres= await Prescription.find({patientId:patientId})
+        return res.status(200).json({Prescription:pres})
+      }
+    }
+  } catch (error) {
+    console.error('Error getting patient:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+export {getPatientById,updatePatient,patientLogin,getPatientByEmail,addAppointment,myPrescription};

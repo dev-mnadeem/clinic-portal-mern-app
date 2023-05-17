@@ -1,9 +1,10 @@
-import Patient from "../models/patientModel";
+import Patient from "../models/patientModel.js";
 import Doctor from "../models/DoctorModel.js";
 import Pharmacy from "../models/PharmacyModel.js"
 import Admin from "../models/adminModel.js";
 import Appointment from "../models/AppointmentModel.js";
 import Lab from "../models/LaboratoryModel.js";
+import Report from "../models/reportModel.js";
 import bcrypt from "bcrypt";
 
 const getAllPatients= async (req, res) => {
@@ -53,9 +54,9 @@ const getAllPharmacies= async (req, res) => {
       if (existingPatient) {
         return res.status(409).json({ error: 'Email already in use' });
       }
-      const patient = new Patient({ name, email, password:hashedPassword, age,disease, phone, address });
+      const patient = new Patient({ name:name, email:email, password:hashedPassword, age:age,disease:disease, phoneNumber:phone, address:address });
       await patient.save();
-      res.status(201).json({ message: 'Patient created successfully' });
+      res.status(201).json({ message: 'Patient created successfully',user:patient });
     } catch (error) {
       console.error('Error creating patient:', error);
       res.status(500).json({ error: 'Internal server error' });
@@ -72,7 +73,7 @@ const getAllPharmacies= async (req, res) => {
       if (existingDoctor) {
         return res.status(409).json({ error: 'Email already in use' });
       }
-      const  doctor = new Doctor({ name, email, password:hashedPassword, specification, phone, address  });
+      const  doctor = new Doctor({ name:name, email:email, password:hashedPassword, address:address ,specification:specification ,phoneNumber:phone  });
       await doctor.save();
       res.status(201).json({ "message": ' Doctor created successfully' });
     } catch (error) {
@@ -92,7 +93,7 @@ const addPharmacy = async (req, res) => {
       if (existingPharmacy) {
         return res.status(409).json({ error: 'Email already in use' });
       }
-      const  newPharmacy= new Pharmacy({ name, email, password:hashedPassword ,phone  });
+      const  newPharmacy= new Pharmacy({ name:name, email:email, password:hashedPassword ,phoneNumber:phone  });
       await newPharmacy.save();
       res.status(201).json({ "message": ' Pharm created successfully' });
     } catch (error) {
@@ -111,7 +112,7 @@ const addLab = async (req, res) => {
       if (existingLab) {
         return res.status(409).json({ error: 'Email already in use' });
       }
-      const  newLab= new Lab({ name, email, password:hashedPassword,address,specification ,phone  });
+      const  newLab= new Lab({ name:name, email:email, password:hashedPassword,address:address,specification:specification ,phoneNumber:phone  });
       await newLab.save();
       res.status(201).json({ "message": ' Lab created successfully' });
     } catch (error) {
@@ -144,8 +145,8 @@ const delPatient =  async (req,res)=>{
         if (!user) {
           return res.status(404).json({ message: 'User not found' });
         }else{
-            await Appointment.deleteMany({patientId:userId});
-            
+          await Appointment.deleteMany({patientId:userId});
+          await Report.deleteMany({patientId:userId})
         }
         res.status(200).json({ message: 'User deleted successfully', user });
     } catch (error) {
@@ -154,10 +155,10 @@ const delPatient =  async (req,res)=>{
     
 }
 const delPharmacy =  async (req,res)=>{
-    const  userId  = req.body.userId;
+    const  PharmId  = req.body.PharmId;
 
     try {
-        const user = await Pharmacy.findByIdAndDelete(userId);
+        const user = await Pharmacy.findByIdAndDelete(PharmId);
         if (!user) {
           return res.status(404).json({ message: 'User not found' });
         }
@@ -168,33 +169,268 @@ const delPharmacy =  async (req,res)=>{
     
 }
 const delLab =  async (req,res)=>{
-    const  userId  = req.body.userId;
+    const  LabID  = req.body.LabId;
 
     try {
-        const user = await Lab.findByIdAndDelete(userId);
+        const user = await Lab.findByIdAndDelete(LabID);
         if (!user) {
           return res.status(404).json({ message: 'User not found' });
+        }else{
+          await Report.deleteMany({LabId:LabID})
         }
         res.status(200).json({ message: 'User deleted successfully', user });
     } catch (error) {
         res.status(500).json({ message: 'Error deleting user', error })
     }
 }
+const updatePatient = async (req, res) => {
+  try {
+    console.log(req.body)
+    // Find user based on email
+    const user = await Patient.findOne({ email: req.body.email });
 
-Router.post("/addPatient",addPatient)
-Router.post("/addPharmacy",addPharmacy)
-Router.post("/addDoctor",addDoctor)
-Router.post("/addLab",addLab)
-Router.get("/getAllPatients",getAllPatients)
-Router.get("/getAllPharmacies",getAllPharmacies)
-Router.get("/getAllDoctors",getAllDoctors)
-Router.get("/getAllLabs",getAllLabs)
-Router.post("/delPatient",delPatient)
-Router.post("/delDoctor",delDoctor)
-Router.post("/delPharmacy",delPharmacy)
-Router.post("/delLab",delLab)
-Router.post("updatePatient")
-Router.post("updateDoctor")
-Router.post("updatePharmacy")
-Router.post("updateLab")
-Router.post("/login")
+    // If user not found, return an error response
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Update user fields if they are present in the request body
+    if (req.body.name) {
+      user.name = req.body.name;
+    }
+
+    if (req.body.password!== undefined) {
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(req.body.password, saltRounds);
+      user.password = hashedPassword;
+    }
+
+    if (req.body.disease) {
+      user.disease = req.body.disease;
+    }
+
+    if (req.body.age) {
+      user.age = req.body.age;
+    }
+
+    if (req.body.phone) {
+      user.phone = req.body.phone;
+    }
+
+    if (req.body.address) {
+      user.address = req.body.address;
+    }
+
+    // Save updated user to database
+    await user.save();
+
+    // Return success response
+    return res.status(200).json({ message: 'User updated successfully' });
+  } catch (error) {
+    // Handle any errors that occur during the update process
+    console.error(error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+const updateDoctor = async (req, res) => {
+    console.log(req.body)
+    try {
+      // Find user based on email
+      const user = await Doctor.findOne({ email: req.body.email });
+  
+      // If user not found, return an error response
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+  
+      // Update user fields if they are present in the request body
+      if (req.body.name) {
+        user.name = req.body.name;
+      }
+  
+      if (req.body.password!== undefined) {
+        const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(req.body.password, saltRounds);
+      user.password = hashedPassword;
+      }
+  
+      if (req.body.specification) {
+        user.specification = req.body.specification;
+      }
+  
+      if (req.body.phone) {
+        user.phone = req.body.phone;
+      }
+  
+      if (req.body.address) {
+        user.address = req.body.address;
+      }
+  
+      // Save updated user to database
+      await user.save();
+  
+      // Return success response
+      return res.status(200).json({ message: 'User updated successfully' });
+    } catch (error) {
+      // Handle any errors that occur during the update process
+      console.error(error);
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+const updatePharmacy = async (req, res) => {
+    console.log(req.body)
+    
+    try {
+      // Find user based on email
+      const user = await Pharmacy.findOne({ email: req.body.email });
+  
+      // If user not found, return an error response
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+  
+      // Update user fields if they are present in the request body
+      if (req.body.name) {
+        user.name = req.body.name;
+      }
+  
+      if (req.body.password!== undefined) {
+        const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(req.body.password, saltRounds);
+      user.password = hashedPassword;
+      }
+  
+      if (req.body.phone ) {
+        user.phone = req.body.phone;
+      }
+  
+      // Save updated user to database
+      await user.save();
+  
+      // Return success response
+      return res.status(200).json({ message: 'User updated successfully' });
+    } catch (error) {
+      // Handle any errors that occur during the update process
+      console.error(error);
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+const updateLab = async (req, res) => {
+  try {
+    // Find user based on email
+    const user = await Lab.findOne({ email: req.body.email });
+
+    // If user not found, return an error response
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Update user fields if they are present in the request body
+    if (req.body.name !== undefined) {
+      user.name = req.body.name;
+    }
+
+    if (req.body.password !== undefined) {
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(req.body.password, saltRounds);
+      user.password = hashedPassword;
+    }
+
+    if (req.body.address !== undefined) {
+      user.address = req.body.address;
+    }
+
+    if (req.body.phone !== undefined) {
+      user.phone = req.body.phone;
+    }
+
+    if (req.body.specification !== undefined) {
+      user.specification = req.body.specification;
+    }
+
+    // Save updated user to database
+    await user.save();
+
+    // Return success response
+    return res.status(200).json({ message: 'User updated successfully' });
+  } catch (error) {
+    // Handle any errors that occur during the update process
+    console.error(error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+}
+const signup = async (req, res) => {
+  const { name, password,email } = req.body;
+
+  try {
+    // Check if username is already taken
+    const userExists = await Admin.findOne({ email:email });
+    if (userExists) {
+      return res.status(409).send('Mail already taken');
+    }
+
+    // Hash the password using bcrypt
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Create a new user
+    const newUser = new User({
+      username: username,
+      password: hashedPassword,
+      email:email
+    });
+
+    // Save the new user to the database
+    await newUser.save();
+
+    res.sendStatus(201).json(newUser);
+  } catch (error) {
+    console.error(error);
+    res.sendStatus(500);
+  }
+}
+const login = async (req, res) => {
+  const { name, password,email } = req.body;
+
+  try {
+    // Find the user by username
+    const user = await Admin.findOne({ email:email });
+    if (!user) {
+      return res.status(401).send('Invalid credentials');
+    }
+
+    // Compare the provided password with the stored hashed password
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
+      return res.status(401).send('Invalid credentials');
+    }
+
+    res.sendStatus(200).json(user);
+  } catch (error) {
+    console.error(error);
+    res.sendStatus(500);
+  }
+}
+export{
+  addPatient,
+  addPharmacy,
+  addDoctor,
+  addLab,
+  getAllPatients,
+  getAllPharmacies,
+  getAllDoctors,
+  getAllLabs,
+  delPatient,
+  delDoctor,
+  delPharmacy,
+  delLab,
+  updatePatient,
+  updateDoctor,
+  updatePharmacy,
+  updateLab,
+  login,
+  signup
+};

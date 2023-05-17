@@ -1,4 +1,5 @@
-const pharmacistSchema = new Schema({
+import mongoose from "mongoose";
+const pharmacistSchema = new mongoose.Schema({
     name:{
         type:String
     },
@@ -14,6 +15,7 @@ const pharmacistSchema = new Schema({
     medicines: {
       type: Map,
       of: Number,
+      default:[]
     },
     phoneNumber: {
       type: String,

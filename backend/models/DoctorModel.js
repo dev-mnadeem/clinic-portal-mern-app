@@ -1,8 +1,5 @@
-const mongoose = require('mongoose');
-const { Schema } = mongoose;
-
-// Doctor Model
-const doctorSchema = new Schema({
+import mongoose from 'mongoose'
+const doctorSchema = new mongoose.Schema({
   name:{
     type:String
   },
@@ -15,12 +12,6 @@ const doctorSchema = new Schema({
     type: String,
     required: true,
   },
-  appointments: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: 'Appointment',
-    },
-  ],
   history: {
     type: String,
   },
@@ -35,6 +26,5 @@ const doctorSchema = new Schema({
     required: true,
   },
 });
-
 const Doctor = mongoose.model('Doctor', doctorSchema);
 export default Doctor

@@ -1,11 +1,12 @@
-const appointmentSchema = new Schema({
+import mongoose from "mongoose";
+const appointmentSchema = new mongoose.Schema({
     doctorId: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: 'Doctor',
       required: true,
     },
     patientId: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: 'Patient',
       required: true,
     },
@@ -13,6 +14,16 @@ const appointmentSchema = new Schema({
       type: String,
       required: true,
     },
+    patientName:{
+      type:String,
+    },
+    reason:{
+      type:String
+    },
+    rejected:{
+      type:Boolean,
+      default:false
+    }
   });
   
   const Appointment = mongoose.model('Appointment', appointmentSchema);

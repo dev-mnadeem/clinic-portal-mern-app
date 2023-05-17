@@ -1,4 +1,5 @@
-const laboratorySchema = new Schema({
+import mongoose from "mongoose";
+const laboratorySchema = new mongoose.Schema({
     name:{
         type:String
     },
@@ -10,10 +11,6 @@ const laboratorySchema = new Schema({
     password: {
       type: String,
       required: true,
-    },
-    reports: {
-      type: Map,
-      of: String,
     },
     address: {
       type: String,
