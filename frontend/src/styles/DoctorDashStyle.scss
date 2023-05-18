@@ -1,0 +1,60 @@
+#doctor-dash {
+  width: 100vw;
+  height: 100vh;
+
+  #side-nav {
+    background-color: lavender;
+    height: 100vh !important;
+    h1 {
+      color: rgb(82, 81, 81);
+    }
+    .nav {
+      height: 50%;
+
+      .navigate {
+        width: 100%;
+
+        .navlink {
+          width: 100%;
+          border-bottom: 1px solid black;
+        }
+        // .navlink:hover {
+        //   background-color: rgb(154, 154, 223);
+        //   border-bottom: 1px solid white;
+        // }
+      }
+    }
+  }
+  #main-content {
+    background-color: whitesmoke;
+
+    table {
+      border-collapse: collapse;
+      width: 80%;
+      td,
+      th {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+      }
+
+      tr:nth-child(even) {
+        background-color: #dddddd;
+      }
+    }
+  }
+}
+
+@media (max-width: 540px) {
+  #register {
+    height: 120vh;
+    #side-nav {
+      height: 120vh !important;
+      .nav {
+        height: 60%;
+      }
+    }
+    // #main-content {
+    // }
+  }
+}

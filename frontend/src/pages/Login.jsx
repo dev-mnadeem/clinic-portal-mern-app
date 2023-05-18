@@ -1,12 +1,63 @@
 import "../../node_modules/bootstrap/dist/css/bootstrap.min.css";
 import "../styles/LoginStyle.scss";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { useState } from "react";
 
 const Login = (props) => {
   let navigate = useNavigate();
 
   const navreset = () => {
     navigate("/pass");
+  };
+  const navtodoc = (user) => {
+    navigate("/doc", {
+      state: {
+        user: user,
+      },
+    });
+  };
+
+  const navtopat = (user) => {
+    navigate("/pat", {
+      state: {
+        user: user,
+      },
+    });
+  };
+
+  // const [user, setuser] = useState([]);
+
+  const signIn = async () => {
+    let user;
+    try {
+      let type = props.heading;
+      let email = document.getElementById("email").value;
+      let password = document.getElementById("password").value;
+      console.log(type);
+      const response = await axios.post(
+        `http://localhost:5000/api/${type}/login`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          data: {
+            email: email,
+            password: password,
+          },
+        }
+      );
+      user = response.data;
+    } catch (error) {
+      console.error(error);
+    } finally {
+      if (props.heading == "Doctors") {
+        navtodoc(user);
+      }
+      if (props.heading == "Patients") {
+        navtopat(user);
+      }
+    }
   };
   return (
     <div id="login-page">
@@ -34,7 +85,7 @@ const Login = (props) => {
           />
         </div>
         <p onClick={navreset}>Forgot password reset it here</p>
-        <button type="submit" className="btn login-button">
+        <button type="button" className="btn login-button" onClick={signIn}>
           Login
         </button>
       </form>
