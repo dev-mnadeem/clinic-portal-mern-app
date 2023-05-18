@@ -28,7 +28,7 @@ const login = async (req, res) => {
 };
 
 const changePass = async (req, res) => {
-  const { password, email, newpass } = req.body;
+  const { password, email, newpass } = req.body.data;
 
   try {
     // Find the user by username
@@ -156,12 +156,14 @@ const acceptAppointments = async (req, res) => {
 };
 const addPrescription = async (req, res) => {
   try {
-    const { Med, patientId, quantity, doctorId } = req.body;
+    const { Med, patientId, quantity, doctorId } = req.body.data;
+    console.log(Med, patientId, quantity, doctorId);
     if (Med === null || patientId === null || quantity === null) {
       return res.status(401).send("Invalid value");
     } else {
       const PatientObj = await Patient.findById(patientId);
       const DoctorObj = await Doctor.findById(doctorId);
+      console.log(PatientObj, DoctorObj);
       if (!PatientObj || !DoctorObj) {
         return res.status(401).send("Invalid Parameters Entered");
       } else {
@@ -169,7 +171,8 @@ const addPrescription = async (req, res) => {
           doctorId: doctorId,
           patientId: patientId,
         });
-        newPres.Medicine.set(Med, quantity);
+        newPres.Medicine = Med;
+        newPres.Quantity = quantity;
         newPres.doctorName = DoctorObj.name;
         await newPres.save();
         return res.status(200).json({

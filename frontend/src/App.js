@@ -7,6 +7,8 @@ import Login from "./pages/Login";
 import Dasboard from "./pages/Dashboard";
 import DoctorDash from "./pages/DoctorDash";
 import Patientdash from "./pages/patientdash";
+import Labdash from "./pages/Labdash";
+import PharmacyDash from "./pages/PharmacyDash";
 
 function App() {
   return (
@@ -23,6 +25,8 @@ function App() {
         <Route path="/dash" element={<Dasboard />} />
         <Route path="/doc" element={<DoctorDash />} />
         <Route path="/pat" element={<Patientdash />} />
+        <Route path="/lab" element={<Labdash />} />
+        <Route path="/pharm" element={<PharmacyDash />}></Route>
       </Routes>
     </Router>
   );

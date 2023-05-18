@@ -102,7 +102,7 @@ const getPatientByEmail = async (req, res) => {
 };
 const addAppointment = async (req, res) => {
   try {
-    const { doctorId, patientId, reason, datetime } = req.body;
+    const { doctorId, patientId, reason, datetime } = req.body.data;
     if (!doctorId || !patientId || !reason || !datetime) {
       return res.status(400).json("Err: Expected all parameters");
     } else {
@@ -130,7 +130,7 @@ const addAppointment = async (req, res) => {
 };
 const myPrescription = async (req, res) => {
   try {
-    const { patientId } = req.body;
+    const patientId = req.body.data.userID;
     if (!patientId) {
       return res.status(400).json("Err: Expected all parameters");
     } else {
@@ -149,7 +149,7 @@ const myPrescription = async (req, res) => {
 };
 const getAllAppointments = async (req, res) => {
   try {
-    const userID = req.body.userID;
+    const userID = req.body.data.userID;
     const user = await Patient.findById(userID);
     if (!user) {
       return res.status(401).send("Invalid credentials");
@@ -165,6 +165,33 @@ const getAllAppointments = async (req, res) => {
     res.status(500);
   }
 };
+const changePass = async (req, res) => {
+  const { password, email, newpass } = req.body.data;
+
+  try {
+    // Find the user by username
+    const user = await Patient.findOne({ email: email });
+    if (!user) {
+      return res.status(401).send("Invalid credentials");
+    }
+
+    // Compare the provided password with the stored hashed password
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
+      return res.status(401).send("Invalid credentials");
+    } else {
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(newpass, saltRounds);
+      user.password = hashedPassword;
+      await user.save();
+    }
+
+    res.status(200).json(user);
+  } catch (error) {
+    console.error(error);
+    res.status(500);
+  }
+};
 export {
   getPatientById,
   updatePatient,
@@ -173,4 +200,5 @@ export {
   addAppointment,
   myPrescription,
   getAllAppointments,
+  changePass,
 };

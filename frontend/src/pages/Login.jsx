@@ -8,7 +8,11 @@ const Login = (props) => {
   let navigate = useNavigate();
 
   const navreset = () => {
-    navigate("/pass");
+    navigate("/pass", {
+      state: {
+        type: props.heading,
+      },
+    });
   };
   const navtodoc = (user) => {
     navigate("/doc", {
@@ -26,7 +30,27 @@ const Login = (props) => {
     });
   };
 
-  // const [user, setuser] = useState([]);
+  const navtolab = (user) => {
+    navigate("/lab", {
+      state: {
+        user: user,
+      },
+    });
+  };
+  const navtopharm = (user) => {
+    navigate("/pharm", {
+      state: {
+        user: user,
+      },
+    });
+  };
+  const navtoadmin = (user) => {
+    navigate("/register", {
+      state: {
+        user: user,
+      },
+    });
+  };
 
   const signIn = async () => {
     let user;
@@ -52,10 +76,29 @@ const Login = (props) => {
       console.error(error);
     } finally {
       if (props.heading == "Doctors") {
-        navtodoc(user);
+        if (user.length != 0) {
+          navtodoc(user);
+        }
       }
       if (props.heading == "Patients") {
-        navtopat(user);
+        if (user.length != 0) {
+          navtopat(user);
+        }
+      }
+      if (props.heading == "Labs") {
+        if (user.length != 0) {
+          navtolab(user);
+        }
+      }
+      if (props.heading == "Pharmacies") {
+        if (user.length != 0) {
+          navtopharm(user);
+        }
+      }
+      if (props.heading == "Admin") {
+        if (user.length != 0) {
+          navtoadmin(user);
+        }
       }
     }
   };

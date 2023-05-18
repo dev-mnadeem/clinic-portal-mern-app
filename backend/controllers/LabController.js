@@ -28,7 +28,7 @@ const login = async (req, res) => {
 };
 
 const changePass = async (req, res) => {
-  const { password, email, newpass } = req.body;
+  const { password, email, newpass } = req.body.data;
 
   try {
     // Find the user by username
@@ -90,7 +90,8 @@ const getClientPrescription = async (req, res) => {
 };
 const addReports = async (req, res) => {
   try {
-    const { LabId, patientId, Type } = req.body;
+    console.log(req.body.data);
+    const { LabId, patientId, Type } = req.body.data;
     if (!LabId || !patientId || !Type) {
       return res.status(400).json("Err: Expected all parameters");
     } else {
@@ -141,7 +142,7 @@ const getAllReportsPatient = async (req, res) => {
 };
 const getAllReportsLab = async (req, res) => {
   try {
-    const { LabId } = req.body;
+    const { LabId } = req.body.data;
     if (!LabId) {
       return res.status(400).json("Err: Expected all parameters");
     } else {

@@ -12,7 +12,7 @@ const router = express.Router();
 
 router.post("/login", login);
 router.post("/changePass", changePass);
-router.get("/getAllReportsLab", getAllReportsLab);
+router.post("/getAllReportsLab", getAllReportsLab);
 router.get("/getClientPrescription", getClientPrescription);
 router.get("/getAllReportsPatient", getAllReportsPatient);
 router.post("/addReports", addReports);
