@@ -3,8 +3,12 @@ import "../styles/RegisterStyle.scss";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import Userdisplay from "../components/Userdisplay";
-
+import { useNavigate } from "react-router-dom";
 const Register = () => {
+  const navigate = useNavigate();
+  const navtohome = () => {
+    navigate("/");
+  };
   const [All, setAll] = useState([]);
   const [reset, setreset] = useState(false);
 
@@ -213,7 +217,7 @@ const Register = () => {
         <div className="row">
           <div id="side-nav" className="col-xl-2 col-lg-2 col-3 px-0 pt-2">
             <div className="nav d-flex flex-column align-items-center justify-content-between px-0">
-              <h1>Curify</h1>
+              <h1 onClick={navtohome}>Curify</h1>
               <div className="navigate d-flex flex-column align-items-start justify-content-evenly ">
                 <div
                   className="navlink ps-xl-3 ps-lg-3 ps-1"

@@ -6,9 +6,14 @@ import Userdisplay from "../components/Userdisplay";
 import "../../node_modules/bootstrap/dist/css/bootstrap.min.css";
 import "../../node_modules/bootstrap/js/dist/modal.js";
 import { useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const DoctorDash = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const navtohome = () => {
+    navigate("/");
+  };
   const [appointments, setappointments] = useState([]);
   const [booked, setbooked] = useState([]);
   const [reset, setreset] = useState(false);
@@ -83,7 +88,9 @@ const DoctorDash = () => {
         <div className="row">
           <div id="side-nav" className="col-xl-2 col-lg-2 col-3 px-0 pt-2">
             <div className="nav d-flex flex-column align-items-center   px-0">
-              <h1 className="mb-5">Curify</h1>
+              <h1 className="mb-5" onClick={navtohome}>
+                Curify
+              </h1>
               <div className="navigate d-flex flex-column align-items-start justify-content-evenly ">
                 <div className="navlink ps-xl-3 ps-lg-3 ps-1">
                   <h4>Doctor: {location.state.user.name}</h4>

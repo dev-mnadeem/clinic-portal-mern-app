@@ -4,8 +4,13 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import "../../node_modules/bootstrap/js/dist/modal.js";
+import { useNavigate } from "react-router-dom";
 
 const PharmacyDash = () => {
+  const navigate = useNavigate();
+  const navtohome = () => {
+    navigate("/");
+  };
   const location = useLocation();
   const [patients, setpatients] = useState([]);
   const [medicine, setmedicine] = useState([]);
@@ -163,7 +168,9 @@ const PharmacyDash = () => {
         <div className="row">
           <div id="side-nav" className="col-xl-2 col-lg-2 col-3 px-0 pt-2">
             <div className="nav d-flex flex-column align-items-center   px-0">
-              <h1 className="mb-5">Curify</h1>
+              <h1 className="mb-5" onClick={navtohome}>
+                Curify
+              </h1>
               <div className="navigate d-flex flex-column align-items-start justify-content-evenly ">
                 <div className="navlink ps-xl-3 ps-lg-3 ps-1">
                   <h4> Dashboard </h4>
