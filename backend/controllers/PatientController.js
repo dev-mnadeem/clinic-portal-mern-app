@@ -192,26 +192,27 @@ const changePass = async (req, res) => {
     res.status(500);
   }
 };
-const getMyReport = async(req,res)=>{
-    try {
-      const patientId=req.body.data;
-      if (!patientId) {
-        return res.status(401).send("Invalid credentials");
+const getMyReport = async (req, res) => {
+  try {
+    const { patientId } = req.body.data;
+    console.log(patientId);
+    if (!patientId) {
+      return res.status(401).send("Invalid credentials");
+    } else {
+      const reports = await Report.find({
+        patientId: patientId,
+      });
+      if (!reports) {
+        return res.status(401).send("Invalid Report");
       } else {
-        const reports = await Report.find({
-          patientId: patientId
-        });
-        if(!reports){
-          return res.status(401).send("Invalid Report");
-        }else{
         return res.status(200).json(reports);
-        }
       }
-    } catch (error) {
+    }
+  } catch (error) {
     console.error(error);
     res.status(500);
-    }
-}
+  }
+};
 export {
   getPatientById,
   updatePatient,
@@ -221,5 +222,5 @@ export {
   myPrescription,
   getAllAppointments,
   changePass,
-  getMyReport
+  getMyReport,
 };

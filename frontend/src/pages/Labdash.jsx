@@ -40,7 +40,7 @@ const Labdash = () => {
     let temp;
     try {
       const response = await axios.get(
-        `http://localhost:5000/api/Admin/getAllPatients`,
+        `http://localhost:5000/api/Labs/getAllReport`,
         {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -73,9 +73,9 @@ const Labdash = () => {
   };
 
   const getdata = () => {
-    let Type = document.getElementById("type").value;
+    let remarks = document.getElementById("remarks").value;
 
-    addrep(Type);
+    addrep(remarks);
   };
 
   const addrep = async (Type) => {
@@ -83,15 +83,15 @@ const Labdash = () => {
       let temp2 = location.state.user._id;
 
       const response = await axios.post(
-        `http://localhost:5000/api/Labs/addReports`,
+        `http://localhost:5000/api/Labs/addReportRemarks`,
         {
           headers: {
             "Content-Type": "multipart/form-data",
           },
           data: {
             LabId: temp2,
-            patientId: id,
-            Type: Type,
+            reportId: id,
+            Remarks: Type,
           },
         }
       );
@@ -125,7 +125,7 @@ const Labdash = () => {
           </div>
           <div
             id="main-content"
-            className=" py-4 col-xl-10 col-lg-10 col-9 d-flex flex-column align-items-center justify-content-center"
+            className=" py-5 col-xl-10 col-lg-10 col-9 d-flex flex-column align-items-center justify-content-center"
           >
             {dash ? (
               <>
@@ -141,29 +141,29 @@ const Labdash = () => {
                 <h3 className="mt-2">Patients</h3>
                 {Object.keys(patients).map((key) => (
                   <div className=" user-box d-flex flex-row align-items-center justify-content-between py-2">
-                    <h3 className="px-2">{patients[key].name}</h3>
+                    <h3 className="px-2">{patients[key].patientName}</h3>
 
                     <button
                       type="button"
                       className="btn button mt-3"
                       onClick={() => addreport(patients[key])}
                     >
-                      Add report
+                      Add Remarks
                     </button>
                   </div>
                 ))}
               </>
             ) : (
-              <form className=" d-flex flex-column align-items-center">
+              <div className=" d-flex flex-column align-items-center">
                 <div className="row register-side">
                   <div className="col-xl col-lg row  d-flex flex-column mx-xl-3 mx-lg-3">
-                    <label for="type">Type</label>
+                    <label for="remarks">Remarks</label>
                     <input
                       type="text"
                       className="form-control mb-3"
-                      placeholder="Enter Type"
-                      aria-label="type"
-                      id="type"
+                      placeholder="Enter remarks"
+                      aria-label="remarks"
+                      id="remarks"
                     />
                   </div>
                 </div>
@@ -174,7 +174,7 @@ const Labdash = () => {
                 >
                   Add Report
                 </button>
-              </form>
+              </div>
             )}
           </div>
         </div>

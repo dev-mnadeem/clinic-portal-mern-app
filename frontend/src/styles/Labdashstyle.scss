@@ -1,10 +1,14 @@
 #lab-dash {
   width: 100vw;
-  height: 100vh;
+  height: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
 
   #side-nav {
     background-color: lavender;
-    height: 100vh !important;
+    min-height: 100vh !important;
+    height: 100% !important;
+
     h1 {
       color: rgb(82, 81, 81);
     }
@@ -25,8 +29,17 @@
       }
     }
   }
+  .container-fluid {
+    overflow-x: hidden !important;
+  }
+  .row {
+    overflow-x: hidden !important;
+  }
   #main-content {
     background-color: whitesmoke;
+    // max-height: 100%;
+
+    overflow-x: hidden;
 
     table {
       border-collapse: collapse;

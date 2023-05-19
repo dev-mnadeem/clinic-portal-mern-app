@@ -8,6 +8,7 @@ import {
   changePass,
   login,
   addReportRemarks,
+  getAllReport,
 } from "../controllers/LabController.js";
 const router = express.Router();
 
@@ -18,5 +19,6 @@ router.get("/getClientPrescription", getClientPrescription);
 router.get("/getAllReportsPatient", getAllReportsPatient);
 router.post("/addReports", addReports);
 router.get("/LabbyID", LabbyID);
-router.post("/addReportRemarks",addReportRemarks)
+router.post("/addReportRemarks", addReportRemarks);
+router.get("/getAllReport", getAllReport);
 export default router;

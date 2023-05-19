@@ -14,6 +14,7 @@ const Patientdash = () => {
   const [prescription, setprescription] = useState([]);
   const [dash, setdash] = useState(true);
   const [doctors, setdoctors] = useState([]);
+  const [reports, setreports] = useState([]);
   const location = useLocation();
   const fetch = async (id, type) => {
     let temp;
@@ -58,13 +59,37 @@ const Patientdash = () => {
       console.error(error);
     } finally {
       setdoctors(temp);
-      console.log(doctors);
+    }
+  };
+
+  const getreports = async () => {
+    let temp;
+    console.log(location.state.user._id);
+    try {
+      const response = await axios.post(
+        `http://localhost:5000/api/Patients/getMyReport`,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          data: {
+            patientId: location.state.user._id,
+          },
+        }
+      );
+      temp = response.data;
+      console.log(temp);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setreports(temp);
     }
   };
 
   useEffect(() => {
     fetch(location.state.user._id, "getAllAppointments");
     fetch(location.state.user._id, "myPrescription");
+    getreports();
     getdocs();
   }, []);
 
@@ -111,7 +136,9 @@ const Patientdash = () => {
         <div className="row">
           <div id="side-nav" className="col-xl-2 col-lg-2 col-3 px-0 pt-2">
             <div className="nav d-flex flex-column align-items-center   px-0">
-              <h1 className="mb-5" onClick={navtohome}>Curify</h1>
+              <h1 className="mb-5" onClick={navtohome}>
+                Curify
+              </h1>
               <div className="navigate d-flex flex-column align-items-start justify-content-evenly ">
                 <div
                   className="navlink ps-xl-3 ps-lg-3 ps-1"
@@ -162,6 +189,19 @@ const Patientdash = () => {
                     <h3 className="px-2">{prescription[key].doctorName}</h3>
 
                     <h3 className="px-2">{prescription[key].Medicine}</h3>
+                  </div>
+                ))}
+                <h3 className="mt-2">Reports</h3>
+                <div className=" user-head d-flex flex-row align-items-center justify-content-between py-2">
+                  <h3 className="px-2">Patient Name</h3>
+
+                  <h3 className="px-2">Remarks</h3>
+                </div>
+                {Object.keys(reports).map((key) => (
+                  <div className=" user-box d-flex flex-row align-items-center justify-content-between py-2">
+                    <h3 className="px-2">{reports[key].patientName}</h3>
+
+                    <h3 className="px-2">{reports[key].LabRemarks}</h3>
                   </div>
                 ))}
               </>

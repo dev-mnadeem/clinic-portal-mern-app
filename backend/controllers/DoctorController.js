@@ -190,16 +190,23 @@ const addPrescription = async (req, res) => {
 };
 const addReport = async (req, res) => {
   try {
-    const { reporttype, patientId, quantity,doctorId } = req.body;
-    if (reporttype === null || patientId === null || quantity === null||doctorId===null) {
+    const { reporttype, patientId, doctorId } = req.body.data;
+
+    if (reporttype === null || patientId === null || doctorId === null) {
       return res.status(401).send("Invalid value");
     } else {
       const PatientObj = await Patient.findById(patientId);
-      const DoctorObj = await Doctor.findById(doctorId)
-      if (!PatientObj||DoctorObj) {
+      const DoctorObj = await Doctor.findById(doctorId);
+      console.log(PatientObj, DoctorObj);
+      if (!PatientObj || !DoctorObj) {
         return res.status(401).send("Invalid Patient OR Doctor");
       } else {
-        const newRep=new Report({Type:reporttype,patientId:patientId,doctorId:doctorId});
+        const newRep = new Report({
+          Type: reporttype,
+          patientId: patientId,
+          doctorId: doctorId,
+          patientName: PatientObj.name,
+        });
         await newRep.save();
       }
     }
@@ -208,46 +215,46 @@ const addReport = async (req, res) => {
     res.status(500);
   }
 };
-const getPatientReport = async(req,res)=>{
+const getPatientReport = async (req, res) => {
   try {
-    const patientId=req.body.data;
+    const patientId = req.body.data;
     if (!patientId) {
       return res.status(401).send("Invalid credentials");
     } else {
       const reports = await Report.find({
-        patientId: patientId
+        patientId: patientId,
       });
-      if(!reports){
+      if (!reports) {
         return res.status(401).send("Invalid Report");
-      }else{
-      return res.status(200).json(reports);
+      } else {
+        return res.status(200).json(reports);
       }
     }
   } catch (error) {
-  console.error(error);
-  res.status(500);
+    console.error(error);
+    res.status(500);
   }
-}
-const addReportRemarks = async(req,res)=>{
+};
+const addReportRemarks = async (req, res) => {
   try {
-    const {Remarks,reportId}=req.body.data;
-    if (!reportId||Remarks) {
+    const { Remarks, reportId } = req.body.data;
+    if (!reportId || Remarks) {
       return res.status(401).send("Missing Values");
     } else {
       const reports = await Report.findById(reportId);
-      if(!reports){
+      if (!reports) {
         return res.status(401).send("Invalid Report");
-      }else{
-        reports.doctorRemarks=Remarks;
+      } else {
+        reports.doctorRemarks = Remarks;
         await reports.save();
-      return res.status(200).json(reports);
-    }
+        return res.status(200).json(reports);
+      }
     }
   } catch (error) {
-  console.error(error);
-  res.status(500);
+    console.error(error);
+    res.status(500);
   }
-}
+};
 export {
   login,
   changePass,
@@ -259,5 +266,5 @@ export {
   getAllAcceptedAppointments,
   acceptAppointments,
   getPatientReport,
-  addReportRemarks
+  addReportRemarks,
 };

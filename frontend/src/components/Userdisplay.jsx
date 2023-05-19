@@ -200,7 +200,10 @@ const Userdisplay = (props) => {
               ></button>
             </div>
             <div class="modal-body">
-              <form className=" d-flex flex-column align-items-center">
+              <form
+                className=" d-flex flex-column align-items-center"
+                onSubmit={getdata}
+              >
                 <div className="row register-side">
                   <div className="col-xl col-lg row  d-flex flex-column mx-xl-3 mx-lg-3">
                     <label for="name">Enter Name</label>

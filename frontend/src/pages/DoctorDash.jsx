@@ -82,6 +82,31 @@ const DoctorDash = () => {
     addprescription(medname, patient, quantity);
   };
 
+  const addlab = async (reporttype, patientId) => {
+    try {
+      const response = await axios.post(
+        `http://localhost:5000/api/Doctors/addReport`,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          data: {
+            reporttype: reporttype,
+            patientId: patientId,
+            doctorId: location.state.user._id,
+          },
+        }
+      );
+      console.log(response);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const addpatientlab = () => {
+    let test = document.getElementById("Test-type").value;
+    addlab(test, patient);
+  };
+
   return (
     <div id="doctor-dash">
       <div className="container-fluid">
@@ -142,6 +167,15 @@ const DoctorDash = () => {
                       >
                         Add prescription
                       </button>
+                      <button
+                        type="button"
+                        class="btn button mx-2"
+                        data-bs-toggle="modal"
+                        data-bs-target="#exampleModal7"
+                        onClick={() => setpatient(booked[key].patientId)}
+                      >
+                        Add Lab
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -194,6 +228,54 @@ const DoctorDash = () => {
                 Close
               </button>
               <button type="button" class="btn btn-primary" onClick={addpresc}>
+                Save changes
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="modal "
+        id="exampleModal7"
+        tabindex="-1"
+        aria-labelledby="exampleModalLabel7"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel7">
+                Lab
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="Test-type" class="form-label">
+                  Type
+                </label>
+                <input type="text" class="form-control" id="Test-type" />
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary"
+                onClick={addpatientlab}
+              >
                 Save changes
               </button>
             </div>
