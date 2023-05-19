@@ -214,9 +214,9 @@ const delLab = async (req, res) => {
 };
 const updatePatient = async (req, res) => {
   try {
-    console.log(req.body);
+    console.log(req.body.data);
     // Find user based on email
-    const user = await Patient.findOne({ email: req.body.email });
+    const user = await Patient.findOne({ email: req.body.data.email });
 
     // If user not found, return an error response
     if (!user) {
@@ -224,30 +224,30 @@ const updatePatient = async (req, res) => {
     }
 
     // Update user fields if they are present in the request body
-    if (req.body.name) {
-      user.name = req.body.name;
+    if (req.body.data.name) {
+      user.name = req.body.data.name;
     }
 
-    if (req.body.password !== undefined) {
+    if (req.body.data.password !== undefined) {
       const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(req.body.password, saltRounds);
+      const hashedPassword = await bcrypt.hash(req.body.data.password, saltRounds);
       user.password = hashedPassword;
     }
 
-    if (req.body.disease) {
-      user.disease = req.body.disease;
+    if (req.body.data.disease) {
+      user.disease = req.body.data.disease;
     }
 
-    if (req.body.age) {
-      user.age = req.body.age;
+    if (req.body.data.age) {
+      user.age = req.body.data.age;
     }
 
-    if (req.body.phone) {
-      user.phone = req.body.phone;
+    if (req.body.data.phone) {
+      user.phone = req.body.data.phone;
     }
 
-    if (req.body.address) {
-      user.address = req.body.address;
+    if (req.body.data.address) {
+      user.address = req.body.data.address;
     }
 
     // Save updated user to database
@@ -263,10 +263,10 @@ const updatePatient = async (req, res) => {
 };
 
 const updateDoctor = async (req, res) => {
-  console.log(req.body);
+  console.log(req.body.data);
   try {
     // Find user based on email
-    const user = await Doctor.findOne({ email: req.body.email });
+    const user = await Doctor.findOne({ email: req.body.data.email });
 
     // If user not found, return an error response
     if (!user) {
@@ -274,26 +274,26 @@ const updateDoctor = async (req, res) => {
     }
 
     // Update user fields if they are present in the request body
-    if (req.body.name) {
-      user.name = req.body.name;
+    if (req.body.data.name) {
+      user.name = req.body.data.name;
     }
 
-    if (req.body.password !== undefined) {
+    if (req.body.data.password !== undefined) {
       const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(req.body.password, saltRounds);
+      const hashedPassword = await bcrypt.hash(req.body.data.password, saltRounds);
       user.password = hashedPassword;
     }
 
-    if (req.body.specification) {
-      user.specification = req.body.specification;
+    if (req.body.data.specification) {
+      user.specification = req.body.data.specification;
     }
 
-    if (req.body.phone) {
-      user.phone = req.body.phone;
+    if (req.body.data.phone) {
+      user.phone = req.body.data.phone;
     }
 
-    if (req.body.address) {
-      user.address = req.body.address;
+    if (req.body.data.address) {
+      user.address = req.body.data.address;
     }
 
     // Save updated user to database
@@ -309,11 +309,11 @@ const updateDoctor = async (req, res) => {
 };
 
 const updatePharmacy = async (req, res) => {
-  console.log(req.body);
+  console.log(req.body.data);
 
   try {
     // Find user based on email
-    const user = await Pharmacy.findOne({ email: req.body.email });
+    const user = await Pharmacy.findOne({ email: req.body.data.email });
 
     // If user not found, return an error response
     if (!user) {
@@ -321,18 +321,18 @@ const updatePharmacy = async (req, res) => {
     }
 
     // Update user fields if they are present in the request body
-    if (req.body.name) {
-      user.name = req.body.name;
+    if (req.body.data.name) {
+      user.name = req.body.data.name;
     }
 
-    if (req.body.password !== undefined) {
+    if (req.body.data.password !== undefined) {
       const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(req.body.password, saltRounds);
+      const hashedPassword = await bcrypt.hash(req.body.data.password, saltRounds);
       user.password = hashedPassword;
     }
 
-    if (req.body.phone) {
-      user.phone = req.body.phone;
+    if (req.body.data.phone) {
+      user.phone = req.body.data.phone;
     }
 
     // Save updated user to database
@@ -350,7 +350,7 @@ const updatePharmacy = async (req, res) => {
 const updateLab = async (req, res) => {
   try {
     // Find user based on email
-    const user = await Lab.findOne({ email: req.body.email });
+    const user = await Lab.findOne({ email: req.body.data.email });
 
     // If user not found, return an error response
     if (!user) {
@@ -358,26 +358,26 @@ const updateLab = async (req, res) => {
     }
 
     // Update user fields if they are present in the request body
-    if (req.body.name !== undefined) {
-      user.name = req.body.name;
+    if (req.body.data.name !== undefined) {
+      user.name = req.body.data.name;
     }
 
-    if (req.body.password !== undefined) {
+    if (req.body.data.password !== undefined) {
       const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(req.body.password, saltRounds);
+      const hashedPassword = await bcrypt.hash(req.body.data.password, saltRounds);
       user.password = hashedPassword;
     }
 
-    if (req.body.address !== undefined) {
-      user.address = req.body.address;
+    if (req.body.data.address !== undefined) {
+      user.address = req.body.data.address;
     }
 
-    if (req.body.phone !== undefined) {
-      user.phone = req.body.phone;
+    if (req.body.data.phone !== undefined) {
+      user.phone = req.body.data.phone;
     }
 
-    if (req.body.specification !== undefined) {
-      user.specification = req.body.specification;
+    if (req.body.data.specification !== undefined) {
+      user.specification = req.body.data.specification;
     }
 
     // Save updated user to database
