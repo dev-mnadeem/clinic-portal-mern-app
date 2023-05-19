@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import Doctor from "../models/DoctorModel.js";
 import Appointment from "../models/AppointmentModel.js";
 import Prescription from "../models/prescriptionModel.js";
-
+import Report from "../models/reportModel.js";
 const getPatientById = async (req, res) => {
   try {
     const patientId = req.params.id;
@@ -192,6 +192,26 @@ const changePass = async (req, res) => {
     res.status(500);
   }
 };
+const getMyReport = async(req,res)=>{
+    try {
+      const patientId=req.body.data;
+      if (!patientId) {
+        return res.status(401).send("Invalid credentials");
+      } else {
+        const reports = await Report.find({
+          patientId: patientId
+        });
+        if(!reports){
+          return res.status(401).send("Invalid Report");
+        }else{
+        return res.status(200).json(reports);
+        }
+      }
+    } catch (error) {
+    console.error(error);
+    res.status(500);
+    }
+}
 export {
   getPatientById,
   updatePatient,
@@ -201,4 +221,5 @@ export {
   myPrescription,
   getAllAppointments,
   changePass,
+  getMyReport
 };

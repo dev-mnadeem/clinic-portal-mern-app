@@ -17,6 +17,17 @@ const reportSchema = new mongoose.Schema({
     progress:{
         type:String,
         default:"In Progress"
+    },
+    LabRemarks:{
+        type:String
+    },
+    doctorRemarks:{
+        type:String
+    },
+    doctorId:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Doctor",
+        required: true,
     }
 });
 const Report=mongoose.model("Report",reportSchema)

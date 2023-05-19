@@ -7,6 +7,7 @@ import {
   myPrescription,
   getAllAppointments,
   changePass,
+  getMyReport,
 } from "../controllers/PatientController.js";
 import express from "express";
 const router = express.Router();
@@ -20,4 +21,5 @@ router.put("/:id", updatePatient); //takes param
 router.post("/addAppointment", addAppointment);
 router.post("/myPrescription", myPrescription);
 router.post("/getAllAppointments", getAllAppointments);
+router.post("/getMyReport",getMyReport);
 export default router;

@@ -159,6 +159,28 @@ const getAllReportsLab = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+const addReportRemarks = async(req,res)=>{
+  try {
+    const {LabId,Remarks,reportId}=req.body.data;
+    if (!LabId||Remarks||!reportId) {
+      return res.status(401).send("Missing Values");
+    } else {
+      const reports = await Report.findById(reportId);
+      if(!reports){
+        return res.status(401).send("Invalid Report");
+      }else{
+        reports.LabRemarks=Remarks;
+        reports.LabId=LabId;
+        reports.progress="Completed"
+        await reports.save();
+      return res.status(200).json(reports);
+    }
+    }
+  } catch (error) {
+  console.error(error);
+  res.status(500);
+  }
+}
 export {
   getAllReportsLab,
   getAllReportsPatient,
@@ -167,4 +189,5 @@ export {
   LabbyID,
   changePass,
   login,
+  addReportRemarks
 };
