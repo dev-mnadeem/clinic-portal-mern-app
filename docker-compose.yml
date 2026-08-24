@@ -1,0 +1,38 @@
+# MongoDB, the Express API, and the React frontend.
+#
+# MONGO_URI comes from the environment. A populated .env was previously
+# committed here twice, exposing two Atlas cluster passwords — see the README.
+services:
+  mongo:
+    image: mongo:6.0
+    restart: unless-stopped
+    volumes: [mongo-data:/data/db]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  api:
+    build: { context: ., dockerfile: Dockerfile }
+    image: clinic-portal-api:local
+    container_name: clinic_api
+    environment:
+      MONGO_URI: mongodb://mongo:27017/curify
+      PORT: 5000
+    ports: ["5100:5000"]
+    depends_on:
+      mongo: { condition: service_healthy }
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:5100}
+    image: clinic-portal-web:local
+    container_name: clinic_web
+    ports: ["4000:80"]
+    depends_on: [api]
+
+volumes:
+  mongo-data:

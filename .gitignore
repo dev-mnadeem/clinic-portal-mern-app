@@ -1,2 +1,7 @@
 node_modules
 .DS_Store
+# Environment files. .env was previously committed with live MongoDB Atlas
+# credentials — see the README. Never track this.
+.env
+.env.*
+!.env.example
