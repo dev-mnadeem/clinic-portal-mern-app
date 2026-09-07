@@ -10,7 +10,7 @@ const login = async (req, res) => {
 
   try {
     // Find the user by username
-    const user = await Doctor.findOne({ email: email });
+    const user = await Doctor.findOne({ email: email }).select('+password');
     if (!user) {
       return res.status(401).send("Invalid credentials");
     }
@@ -33,7 +33,7 @@ const changePass = async (req, res) => {
 
   try {
     // Find the user by username
-    const user = await Doctor.findOne({ email: email });
+    const user = await Doctor.findOne({ email: email }).select('+password');
     if (!user) {
       return res.status(401).send("Invalid credentials");
     }

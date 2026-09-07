@@ -396,7 +396,7 @@ const signup = async (req, res) => {
 
   try {
     // Check if username is already taken
-    const userExists = await Admin.findOne({ email: email });
+    const userExists = await Admin.findOne({ email: email }).select('+password');
     if (userExists) {
       return res.status(409).send("Mail already taken");
     }
@@ -426,7 +426,7 @@ const login = async (req, res) => {
 
   try {
     // Find the user by username
-    const user = await Admin.findOne({ email: email });
+    const user = await Admin.findOne({ email: email }).select('+password');
     if (!user) {
       return res.status(401).send("Invalid credentials");
     }

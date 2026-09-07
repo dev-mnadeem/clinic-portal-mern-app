@@ -71,7 +71,7 @@ const updatePatient = async (req, res) => {
 const patientLogin = async (req, res) => {
   try {
     const { email, password } = req.body.data;
-    const PatientObj = await Patient.findOne({ email });
+    const PatientObj = await Patient.findOne({ email }).select('+password');
     if (!PatientObj) {
       return res.status(401).json({ error: "Invalid email or password" });
     }
@@ -170,7 +170,7 @@ const changePass = async (req, res) => {
 
   try {
     // Find the user by username
-    const user = await Patient.findOne({ email: email });
+    const user = await Patient.findOne({ email: email }).select('+password');
     if (!user) {
       return res.status(401).send("Invalid credentials");
     }
