@@ -1,3 +1,6 @@
+import { useCallback } from 'react';
+import { API_BASE } from "../api/session";
+import { clearSession, currentSession } from "../api/session";
 import React from "react";
 import "../styles/patientstyle.scss";
 import axios from "axios";
@@ -8,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 const Patientdash = () => {
   const navigate = useNavigate();
   const navtohome = () => {
+    clearSession();
     navigate("/");
   };
   const [booked, setbooked] = useState([]);
@@ -16,11 +20,13 @@ const Patientdash = () => {
   const [doctors, setdoctors] = useState([]);
   const [reports, setreports] = useState([]);
   const location = useLocation();
-  const fetch = async (id, type) => {
+  const actor = location.state?.user || currentSession()?.user;
+  const actorId = actor._id;
+  const fetch = useCallback(async (id, type) => {
     let temp;
     try {
       const response = await axios.post(
-        `http://localhost:5000/api/Patients/${type}`,
+        `${API_BASE}/api/Patients/${type}`,
         {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -34,20 +40,20 @@ const Patientdash = () => {
     } catch (error) {
       console.error(error);
     } finally {
-      if (type == "getAllAppointments") {
-        setbooked(temp);
+      if (type === "getAllAppointments") {
+        setbooked(temp || []);
       }
-      if (type == "myPrescription") {
-        setprescription(temp.Prescription);
+      if (type === "myPrescription") {
+        setprescription(temp?.Prescription || []);
       }
     }
-  };
+  }, []);
 
-  const getdocs = async () => {
+  const getdocs = useCallback(async () => {
     let temp;
     try {
       const response = await axios.get(
-        `http://localhost:5000/api/Admin/getAllDoctors`,
+        `${API_BASE}/api/Patients/doctors`,
         {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -58,40 +64,38 @@ const Patientdash = () => {
     } catch (error) {
       console.error(error);
     } finally {
-      setdoctors(temp);
+      setdoctors(temp || []);
     }
-  };
+  }, []);
 
-  const getreports = async () => {
+  const getreports = useCallback(async () => {
     let temp;
-    console.log(location.state.user._id);
     try {
       const response = await axios.post(
-        `http://localhost:5000/api/Patients/getMyReport`,
+        `${API_BASE}/api/Patients/getMyReport`,
         {
           headers: {
             "Content-Type": "multipart/form-data",
           },
           data: {
-            patientId: location.state.user._id,
+            patientId: actorId,
           },
         }
       );
       temp = response.data;
-      console.log(temp);
     } catch (error) {
       console.error(error);
     } finally {
-      setreports(temp);
+      setreports(temp || []);
     }
-  };
+  }, [actorId]);
 
   useEffect(() => {
-    fetch(location.state.user._id, "getAllAppointments");
-    fetch(location.state.user._id, "myPrescription");
+    fetch(actor._id, "getAllAppointments");
+    fetch(actor._id, "myPrescription");
     getreports();
     getdocs();
-  }, []);
+  }, [actor._id, fetch, getreports, getdocs]);
 
   const gotodash = () => {
     setdash(true);
@@ -102,8 +106,8 @@ const Patientdash = () => {
 
   const appoint = async (patientId, doctorId, reason, datetime) => {
     try {
-      const response = await axios.post(
-        `http://localhost:5000/api/Patients/addAppointment`,
+      await axios.post(
+        `${API_BASE}/api/Patients/addAppointment`,
         {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -122,7 +126,7 @@ const Patientdash = () => {
   };
 
   const makeappointment = (e) => {
-    let patientId = location.state.user._id;
+    let patientId = actor._id;
     let doctorId = document.getElementById("doctor").value;
     let reason = document.getElementById("reason").value;
     let datetime = document.getElementById("date").value;
@@ -209,7 +213,7 @@ const Patientdash = () => {
               <form className=" d-flex flex-column align-items-center">
                 <div className="row register-side">
                   <div className="col-xl col-lg row  d-flex flex-column mx-xl-3 mx-lg-3">
-                    <label for="reason">Reason</label>
+                    <label htmlFor="reason">Reason</label>
                     <input
                       type="text"
                       className="form-control mb-3"
@@ -217,7 +221,7 @@ const Patientdash = () => {
                       aria-label="reason"
                       id="reason"
                     />
-                    <label for="date">Select Date</label>
+                    <label htmlFor="date">Select Date</label>
                     <input
                       type="date"
                       className="form-control mb-3"
@@ -226,8 +230,8 @@ const Patientdash = () => {
                       id="date"
                     />
 
-                    <label for="Doctor">Choose Doctor</label>
-                    <select class="form-select" aria-label="doctor" id="doctor">
+                    <label htmlFor="Doctor">Choose Doctor</label>
+                    <select className="form-select" aria-label="doctor" id="doctor">
                       <option selected>Choose Doctor</option>
 
                       {Object.keys(doctors).map((key) => (

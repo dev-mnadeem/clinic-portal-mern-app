@@ -1,8 +1,8 @@
+import { API_BASE } from "../api/session";
 import "../../node_modules/bootstrap/dist/css/bootstrap.min.css";
 import "../styles/LoginStyle.scss";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { useState } from "react";
 
 const Login = (props) => {
   let navigate = useNavigate();
@@ -58,9 +58,8 @@ const Login = (props) => {
       let type = props.heading;
       let email = document.getElementById("email").value;
       let password = document.getElementById("password").value;
-      console.log(type);
       const response = await axios.post(
-        `http://localhost:5000/api/${type}/login`,
+        `${API_BASE}/api/${type}/login`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -75,28 +74,28 @@ const Login = (props) => {
     } catch (error) {
       console.error(error);
     } finally {
-      if (props.heading == "Doctors") {
-        if (user.length != 0) {
+      if (props.heading === "Doctors") {
+        if (user && user._id) {
           navtodoc(user);
         }
       }
-      if (props.heading == "Patients") {
-        if (user.length != 0) {
+      if (props.heading === "Patients") {
+        if (user && user._id) {
           navtopat(user);
         }
       }
-      if (props.heading == "Labs") {
-        if (user.length != 0) {
+      if (props.heading === "Labs") {
+        if (user && user._id) {
           navtolab(user);
         }
       }
-      if (props.heading == "Pharmacies") {
-        if (user.length != 0) {
+      if (props.heading === "Pharmacies") {
+        if (user && user._id) {
           navtopharm(user);
         }
       }
-      if (props.heading == "Admin") {
-        if (user.length != 0) {
+      if (props.heading === "Admin") {
+        if (user && user._id) {
           navtoadmin(user);
         }
       }
@@ -107,7 +106,7 @@ const Login = (props) => {
       <form className="d-flex flex-column align-items-center justify-content-evenly">
         <h1>{props.heading} Login</h1>
         <div className="form-group">
-          <label for="exampleInputEmail1">Email address</label>
+          <label htmlFor="exampleInputEmail1">Email address</label>
           <input
             type="email"
             className="form-control"
@@ -118,7 +117,7 @@ const Login = (props) => {
           />
         </div>
         <div className="form-group">
-          <label for="exampleInputPassword1">Password</label>
+          <label htmlFor="exampleInputPassword1">Password</label>
           <input
             type="password"
             className="form-control"

@@ -3,57 +3,7 @@ import Pharmacy from "../models/PharmacyModel.js";
 import Prescription from "../models/prescriptionModel.js";
 import Laboratory from "../models/LaboratoryModel.js";
 import Report from "../models/reportModel.js";
-import bcrypt from "bcrypt";
-const login = async (req, res) => {
-  const { password, email } = req.body.data;
 
-  try {
-    // Find the user by username
-    const user = await Laboratory.findOne({ email: email }).select('+password');
-    if (!user) {
-      return res.status(401).send("Invalid credentials");
-    }
-
-    // Compare the provided password with the stored hashed password
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) {
-      return res.status(401).send("Invalid credentials");
-    }
-
-    res.status(200).json(user);
-  } catch (error) {
-    console.error(error);
-    res.status(500);
-  }
-};
-
-const changePass = async (req, res) => {
-  const { password, email, newpass } = req.body.data;
-
-  try {
-    // Find the user by username
-    const user = await Laboratory.findOne({ email: email }).select('+password');
-    if (!user) {
-      return res.status(401).send("Invalid credentials");
-    }
-
-    // Compare the provided password with the stored hashed password
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) {
-      return res.status(401).send("Invalid credentials");
-    } else {
-      const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(newpass, saltRounds);
-      user.password = hashedPassword;
-      await user.save();
-    }
-
-    res.status(200).json(user);
-  } catch (error) {
-    console.error(error);
-    res.status(500);
-  }
-};
 
 const LabbyID = async (req, res) => {
   try {
@@ -66,7 +16,7 @@ const LabbyID = async (req, res) => {
     }
   } catch (error) {
     console.error(error);
-    res.status(500);
+    res.status(500).json({error:"Internal server error"});
   }
 };
 const getClientPrescription = async (req, res) => {
@@ -90,33 +40,17 @@ const getClientPrescription = async (req, res) => {
 };
 const addReports = async (req, res) => {
   try {
-    console.log(req.body.data);
-    const { LabId, patientId, Type } = req.body.data;
-    if (!LabId || !patientId || !Type) {
-      return res.status(400).json("Err: Expected all parameters");
-    } else {
-      const LabObj = await Laboratory.findById(LabId);
-      console.log(LabObj);
-
-      const PatientObj = await Patient.findById(patientId);
-      console.log(PatientObj);
-      if (!LabObj || !PatientObj) {
-        return res.status(400).json("Err: Incorrect Patient or Lab ID");
-      } else {
-        const NewRep = new Report({
-          LabId: LabId,
-          patientId: patientId,
-          Type: Type,
-        });
-        await NewRep.save();
-        return res.status(200).json(NewRep);
-      }
-    }
-  } catch (error) {
-    console.error("Error getting patient:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
+    const {reportId, Remarks} = req.body.data;
+    const report = await Report.findOneAndUpdate(
+      {_id:reportId, LabId:req.actor.id},
+      {$set:{LabRemarks:Remarks || '', progress:'Completed'}},
+      {new:true, runValidators:true},
+    );
+    if (!report) return res.status(404).json({error:'Assigned request not found'});
+    return res.json(report);
+  } catch {return res.status(500).json({error:'Unable to save report'});}
 };
+
 const getAllReportsPatient = async (req, res) => {
   try {
     const { LabId, patientId } = req.body;
@@ -162,12 +96,10 @@ const getAllReportsLab = async (req, res) => {
 const addReportRemarks = async (req, res) => {
   try {
     const { LabId, Remarks, reportId } = req.body.data;
-    console.log(LabId, Remarks, reportId);
     if (!LabId || !Remarks || !reportId) {
       return res.status(401).send("Missing Values");
     } else {
       const reports = await Report.findById(reportId);
-      console.log(reports);
       if (!reports) {
         return res.status(401).send("Invalid Report");
       } else {
@@ -180,12 +112,12 @@ const addReportRemarks = async (req, res) => {
     }
   } catch (error) {
     console.error(error);
-    res.status(500);
+    res.status(500).json({error:"Internal server error"});
   }
 };
 const getAllReport = async (req, res) => {
   try {
-    const reports = await Report.find({ progress: "In Progress" });
+    const reports = await Report.find({ progress: "In Progress", LabId: req.actor.id });
 
     res.status(200).json(reports);
   } catch (error) {
@@ -199,8 +131,6 @@ export {
   addReports,
   getClientPrescription,
   LabbyID,
-  changePass,
-  login,
   addReportRemarks,
   getAllReport,
 };

@@ -1,3 +1,5 @@
+import { signIn, roleAccess, changeOwnPassword } from '../security/access.js';
+import rateLimit from 'express-rate-limit';
 import express from "express";
 import {
   getAllReportsLab,
@@ -5,15 +7,15 @@ import {
   addReports,
   getClientPrescription,
   LabbyID,
-  changePass,
-  login,
   addReportRemarks,
   getAllReport,
 } from "../controllers/LabController.js";
 const router = express.Router();
+router.post('/login', rateLimit({windowMs:15 * 60 * 1000, limit:20, standardHeaders:'draft-7', legacyHeaders:false}), signIn('lab'));
+router.use(roleAccess('lab'));
 
-router.post("/login", login);
-router.post("/changePass", changePass);
+
+router.post('/changePass', changeOwnPassword('lab'));
 router.post("/getAllReportsLab", getAllReportsLab);
 router.get("/getClientPrescription", getClientPrescription);
 router.get("/getAllReportsPatient", getAllReportsPatient);

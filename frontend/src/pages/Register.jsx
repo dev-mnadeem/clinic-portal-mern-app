@@ -1,3 +1,7 @@
+import { useCallback } from 'react';
+import AssignmentDesk from "../components/AssignmentDesk";
+import { API_BASE } from "../api/session";
+import { clearSession } from "../api/session";
 import "../../node_modules/bootstrap/dist/css/bootstrap.min.css";
 import "../styles/RegisterStyle.scss";
 import axios from "axios";
@@ -7,34 +11,16 @@ import { useNavigate } from "react-router-dom";
 const Register = () => {
   const navigate = useNavigate();
   const navtohome = () => {
+    clearSession();
     navigate("/");
   };
   const [All, setAll] = useState([]);
   const [reset, setreset] = useState(false);
 
-  useEffect(() => {
-    if (managePatient && reset) {
-      fetch("getAllPatients");
-      setreset(false);
-    }
-    if (manageDoctor && reset) {
-      fetch("getAllDoctors");
-      setreset(false);
-    }
-    if (managelab && reset) {
-      fetch("getAllLabs");
-      setreset(false);
-    }
-    if (managepharma && reset) {
-      fetch("getAllPharmacies");
-      setreset(false);
-    }
-  }, [reset]);
-
-  const fetch = async (name) => {
+  const fetch = useCallback(async (name) => {
     try {
       const response = await axios.get(
-        `http://localhost:5000/api/Admin/${name}`,
+        `${API_BASE}/api/Admin/${name}`,
         {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -46,7 +32,7 @@ const Register = () => {
     } catch (error) {
       console.error(error);
     }
-  };
+  }, []);
   const add = async (
     name,
     email,
@@ -59,9 +45,8 @@ const Register = () => {
     age
   ) => {
     try {
-      console.log("in");
-      const response = await axios.post(
-        `http://localhost:5000/api/Admin/${type}`,
+      await axios.post(
+        `${API_BASE}/api/Admin/${type}`,
         {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -78,12 +63,11 @@ const Register = () => {
           },
         }
       );
-      console.log(response);
     } catch (error) {
-      console.log(error);
     }
   };
-  const getdata = () => {
+  const getdata = (event) => {
+    event.preventDefault();
     let name = document.getElementById("name").value;
     let email = document.getElementById("email").value;
     let type;
@@ -133,6 +117,26 @@ const Register = () => {
   const [manageDoctor, setmanageDoctor] = useState(false);
   const [managelab, setmanagelab] = useState(false);
   const [managepharma, setmanagepharma] = useState(false);
+
+  useEffect(() => {
+    if (managePatient && reset) {
+      fetch("getAllPatients");
+      setreset(false);
+    }
+    if (manageDoctor && reset) {
+      fetch("getAllDoctors");
+      setreset(false);
+    }
+    if (managelab && reset) {
+      fetch("getAllLabs");
+      setreset(false);
+    }
+    if (managepharma && reset) {
+      fetch("getAllPharmacies");
+      setreset(false);
+    }
+  }, [reset, managePatient, manageDoctor, managelab, managepharma, fetch]);
+
 
   const addpatient = () => {
     setpatient(true);
@@ -250,6 +254,7 @@ const Register = () => {
             </div>
           </div>
           <div id="main-content" className="col-xl-10 col-lg-10 col-9">
+            <header className="workspace-heading"><span>CLINIC OPERATIONS</span><h2>Administration workspace</h2><p>Manage care teams and route requests to the right provider.</p></header>
             {managePatient || manageDoctor || managelab || managepharma ? (
               <div className="mt-5">
                 {managePatient ? (
@@ -353,7 +358,7 @@ const Register = () => {
                         >
                           <div className="row register-side">
                             <div className="col-xl col-lg row  d-flex flex-column mx-xl-3 mx-lg-3">
-                              <label for="name">Enter Name</label>
+                              <label htmlFor="name">Enter Name</label>
                               <input
                                 type="text"
                                 className="form-control mb-3"
@@ -361,7 +366,7 @@ const Register = () => {
                                 aria-label="name"
                                 id="name"
                               />
-                              <label for="email">Enter Email</label>
+                              <label htmlFor="email">Enter Email</label>
                               <input
                                 type="text"
                                 className="form-control mb-3"
@@ -371,7 +376,7 @@ const Register = () => {
                               />
                               {patient ? (
                                 <>
-                                  <label for="disease">Enter Disease</label>
+                                  <label htmlFor="disease">Enter Disease</label>
                                   <input
                                     type="text"
                                     className="form-control mb-3"
@@ -383,7 +388,7 @@ const Register = () => {
                               ) : null}
                               {doctor || lab ? (
                                 <>
-                                  <label for="specification">
+                                  <label htmlFor="specification">
                                     Enter Specification
                                   </label>
                                   <input
@@ -396,7 +401,7 @@ const Register = () => {
                                 </>
                               ) : null}
 
-                              <label for="phnum">Enter Phone Number</label>
+                              <label htmlFor="phnum">Enter Phone Number</label>
                               <input
                                 type="tel"
                                 className="form-control mb-3"
@@ -406,7 +411,7 @@ const Register = () => {
                               />
                             </div>
                             <div className="col-xl col-lg row  d-flex flex-column mx-xl-3 mx-lg-3">
-                              <label for="password">Enter Password</label>
+                              <label htmlFor="password">Enter Password</label>
                               <input
                                 type="password"
                                 className="form-control mb-3"
@@ -414,7 +419,7 @@ const Register = () => {
                                 aria-label="password"
                                 id="password"
                               />
-                              <label for="address">Enter Address</label>
+                              <label htmlFor="address">Enter Address</label>
                               <input
                                 type="text"
                                 className="form-control mb-3"
@@ -424,7 +429,7 @@ const Register = () => {
                               />
                               {patient ? (
                                 <>
-                                  <label for="age">Enter Age</label>
+                                  <label htmlFor="age">Enter Age</label>
                                   <input
                                     type="number"
                                     className="form-control mb-3"
@@ -440,7 +445,7 @@ const Register = () => {
                             Add {patient ? "Patient" : null}
                             {doctor ? "Doctor" : null}
                             {lab ? "Lab" : null}
-                            {pharmacy ? "Pahrmacy" : null}
+                            {pharmacy ? "Pharmacy" : null}
                           </button>
                         </form>
                       </div>
@@ -449,6 +454,7 @@ const Register = () => {
                 )}
               </>
             )}
+            {dash && <AssignmentDesk />}
           </div>
         </div>
       </div>

@@ -1,3 +1,6 @@
+import { useCallback } from 'react';
+import { API_BASE } from "../api/session";
+import { clearSession, currentSession } from "../api/session";
 import React from "react";
 import "../styles/Labdashstyle.scss";
 import axios from "axios";
@@ -7,24 +10,27 @@ import { useNavigate } from "react-router-dom";
 const Labdash = () => {
   const navigate = useNavigate();
   const navtohome = () => {
+    clearSession();
     navigate("/");
   };
   const location = useLocation();
+  const actor = location.state?.user || currentSession()?.user;
+  const actorId = actor._id;
   const [labs, setlabs] = useState([]);
   const [patients, setpatients] = useState([]);
   const [dash, setdash] = useState(true);
   const [reset, setresest] = useState(false);
-  const fetch = async () => {
+  const fetch = useCallback(async () => {
     let temp;
     try {
       const response = await axios.post(
-        `http://localhost:5000/api/Labs/getAllReportsLab`,
+        `${API_BASE}/api/Labs/getAllReportsLab`,
         {
           headers: {
             "Content-Type": "multipart/form-data",
           },
           data: {
-            LabId: location.state.user._id,
+            LabId: actorId,
           },
         }
       );
@@ -32,15 +38,15 @@ const Labdash = () => {
     } catch (error) {
       console.error(error);
     } finally {
-      setlabs(temp);
+      setlabs(temp || []);
     }
-  };
+  }, [actorId]);
 
-  const fetchpatients = async () => {
+  const fetchpatients = useCallback(async () => {
     let temp;
     try {
       const response = await axios.get(
-        `http://localhost:5000/api/Labs/getAllReport`,
+        `${API_BASE}/api/Labs/getAllReport`,
         {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -51,20 +57,20 @@ const Labdash = () => {
     } catch (error) {
       console.error(error);
     } finally {
-      setpatients(temp);
+      setpatients(temp || []);
     }
-  };
+  }, []);
   useEffect(() => {
     fetch();
     fetchpatients();
-  }, []);
+  }, [fetch, fetchpatients]);
   useEffect(() => {
     if (reset) {
       fetch();
       fetchpatients();
       setresest(false);
     }
-  }, [reset]);
+  }, [reset, fetch, fetchpatients]);
 
   const [id, setid] = useState();
   const addreport = (pat) => {
@@ -80,10 +86,10 @@ const Labdash = () => {
 
   const addrep = async (Type) => {
     try {
-      let temp2 = location.state.user._id;
+      let temp2 = actor._id;
 
-      const response = await axios.post(
-        `http://localhost:5000/api/Labs/addReportRemarks`,
+      await axios.post(
+        `${API_BASE}/api/Labs/addReportRemarks`,
         {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -95,7 +101,6 @@ const Labdash = () => {
           },
         }
       );
-      console.log(response);
     } catch (error) {
       console.error(error);
     } finally {
@@ -157,7 +162,7 @@ const Labdash = () => {
               <div className=" d-flex flex-column align-items-center">
                 <div className="row register-side">
                   <div className="col-xl col-lg row  d-flex flex-column mx-xl-3 mx-lg-3">
-                    <label for="remarks">Remarks</label>
+                    <label htmlFor="remarks">Remarks</label>
                     <input
                       type="text"
                       className="form-control mb-3"

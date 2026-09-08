@@ -1,3 +1,6 @@
+import { useCallback } from 'react';
+import { API_BASE } from "../api/session";
+import { clearSession, currentSession } from "../api/session";
 import React from "react";
 import "../styles/DoctorDashStyle.scss";
 import axios from "axios";
@@ -10,18 +13,20 @@ import { useNavigate } from "react-router-dom";
 
 const DoctorDash = () => {
   const location = useLocation();
+  const actor = location.state?.user || currentSession()?.user;
   const navigate = useNavigate();
   const navtohome = () => {
+    clearSession();
     navigate("/");
   };
   const [appointments, setappointments] = useState([]);
   const [booked, setbooked] = useState([]);
   const [reset, setreset] = useState(false);
   const [patient, setpatient] = useState();
-  const fetch = async (id, type) => {
+  const fetch = useCallback(async (id, type) => {
     try {
       const response = await axios.post(
-        `http://localhost:5000/api/Doctors/${type}`,
+        `${API_BASE}/api/Doctors/${type}`,
         {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -31,33 +36,32 @@ const DoctorDash = () => {
           },
         }
       );
-      if (type == "getAllPendingAppointments") {
+      if (type === "getAllPendingAppointments") {
         setappointments(response.data);
       }
-      if (type == "getAllAcceptedAppointments") {
+      if (type === "getAllAcceptedAppointments") {
         setbooked(response.data);
       }
     } catch (error) {
       console.error(error);
     }
-  };
-  useEffect(() => {
-    fetch(location.state.user._id, "getAllPendingAppointments");
-    fetch(location.state.user._id, "getAllAcceptedAppointments");
-    console.log(appointments);
   }, []);
   useEffect(() => {
+    fetch(actor._id, "getAllPendingAppointments");
+    fetch(actor._id, "getAllAcceptedAppointments");
+  }, [actor._id, fetch]);
+  useEffect(() => {
     if (reset) {
-      fetch(location.state.user._id, "getAllPendingAppointments");
-      fetch(location.state.user._id, "getAllAcceptedAppointments");
+      fetch(actor._id, "getAllPendingAppointments");
+      fetch(actor._id, "getAllAcceptedAppointments");
       setreset(false);
     }
-  }, [reset]);
+  }, [reset, actor._id, fetch]);
 
   const addprescription = async (Med, patientId, quantity) => {
     try {
-      const response = await axios.post(
-        `http://localhost:5000/api/Doctors/addPrescription`,
+      await axios.post(
+        `${API_BASE}/api/Doctors/addPrescription`,
         {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -66,11 +70,10 @@ const DoctorDash = () => {
             Med: Med,
             patientId: patientId,
             quantity: quantity,
-            doctorId: location.state.user._id,
+            doctorId: actor._id,
           },
         }
       );
-      console.log(response);
     } catch (error) {
       console.error(error);
     }
@@ -84,8 +87,8 @@ const DoctorDash = () => {
 
   const addlab = async (reporttype, patientId) => {
     try {
-      const response = await axios.post(
-        `http://localhost:5000/api/Doctors/addReport`,
+      await axios.post(
+        `${API_BASE}/api/Doctors/addReport`,
         {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -93,11 +96,10 @@ const DoctorDash = () => {
           data: {
             reporttype: reporttype,
             patientId: patientId,
-            doctorId: location.state.user._id,
+            doctorId: actor._id,
           },
         }
       );
-      console.log(response);
     } catch (error) {
       console.error(error);
     }
@@ -118,7 +120,7 @@ const DoctorDash = () => {
               </h1>
               <div className="navigate d-flex flex-column align-items-start justify-content-evenly ">
                 <div className="navlink ps-xl-3 ps-lg-3 ps-1">
-                  <h4>Doctor: {location.state.user.name}</h4>
+                  <h4>Doctor: {actor.name}</h4>
                 </div>
               </div>
             </div>
@@ -128,7 +130,7 @@ const DoctorDash = () => {
             className=" py-4 col-xl-10 col-lg-10 col-9 d-flex flex-column align-items-center"
           >
             <h3>Confirm Appointment</h3>
-            {appointments.length != 0 ? (
+            {appointments.length !== 0 ? (
               <>
                 {Object.keys(appointments).map((key) => (
                   <Userdisplay
@@ -160,7 +162,7 @@ const DoctorDash = () => {
                     <td className="d-flex flex-row align-items-center justify-content-center">
                       <button
                         type="button"
-                        class="btn button"
+                        className="btn button"
                         data-bs-toggle="modal"
                         data-bs-target="#exampleModal3"
                         onClick={() => setpatient(booked[key].patientId)}
@@ -169,7 +171,7 @@ const DoctorDash = () => {
                       </button>
                       <button
                         type="button"
-                        class="btn button mx-2"
+                        className="btn button mx-2"
                         data-bs-toggle="modal"
                         data-bs-target="#exampleModal7"
                         onClick={() => setpatient(booked[key].patientId)}
@@ -186,48 +188,48 @@ const DoctorDash = () => {
       </div>
 
       <div
-        class="modal "
+        className="modal "
         id="exampleModal3"
         tabindex="-1"
         aria-labelledby="exampleModalLabel3"
         aria-hidden="true"
       >
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="exampleModalLabel3">
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title" id="exampleModalLabel3">
                 Medicine
               </h5>
               <button
                 type="button"
-                class="btn-close"
+                className="btn-close"
                 data-bs-dismiss="modal"
                 aria-label="Close"
               ></button>
             </div>
-            <div class="modal-body">
-              <div class="mb-3">
-                <label for="medname" class="form-label">
+            <div className="modal-body">
+              <div className="mb-3">
+                <label htmlFor="medname" className="form-label">
                   Name
                 </label>
-                <input type="text" class="form-control" id="medname" />
+                <input type="text" className="form-control" id="medname" />
               </div>
-              <div class="mb-3">
-                <label for="quantity" class="form-label">
+              <div className="mb-3">
+                <label htmlFor="quantity" className="form-label">
                   Quantity
                 </label>
-                <input type="number" class="form-control" id="quantity" />
+                <input type="number" className="form-control" id="quantity" />
               </div>
             </div>
-            <div class="modal-footer">
+            <div className="modal-footer">
               <button
                 type="button"
-                class="btn btn-secondary"
+                className="btn btn-secondary"
                 data-bs-dismiss="modal"
               >
                 Close
               </button>
-              <button type="button" class="btn btn-primary" onClick={addpresc}>
+              <button type="button" className="btn btn-primary" onClick={addpresc}>
                 Save changes
               </button>
             </div>
@@ -236,44 +238,44 @@ const DoctorDash = () => {
       </div>
 
       <div
-        class="modal "
+        className="modal "
         id="exampleModal7"
         tabindex="-1"
         aria-labelledby="exampleModalLabel7"
         aria-hidden="true"
       >
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="exampleModalLabel7">
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title" id="exampleModalLabel7">
                 Lab
               </h5>
               <button
                 type="button"
-                class="btn-close"
+                className="btn-close"
                 data-bs-dismiss="modal"
                 aria-label="Close"
               ></button>
             </div>
-            <div class="modal-body">
-              <div class="mb-3">
-                <label for="Test-type" class="form-label">
+            <div className="modal-body">
+              <div className="mb-3">
+                <label htmlFor="Test-type" className="form-label">
                   Type
                 </label>
-                <input type="text" class="form-control" id="Test-type" />
+                <input type="text" className="form-control" id="Test-type" />
               </div>
             </div>
-            <div class="modal-footer">
+            <div className="modal-footer">
               <button
                 type="button"
-                class="btn btn-secondary"
+                className="btn btn-secondary"
                 data-bs-dismiss="modal"
               >
                 Close
               </button>
               <button
                 type="button"
-                class="btn btn-primary"
+                className="btn btn-primary"
                 onClick={addpatientlab}
               >
                 Save changes

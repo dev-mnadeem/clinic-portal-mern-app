@@ -1,3 +1,4 @@
+import { API_BASE } from "../api/session";
 import React from "react";
 import "../styles/UserdisplayStyle.scss";
 import axios from "axios";
@@ -8,9 +9,8 @@ const Userdisplay = (props) => {
     try {
       let type = props.type;
       let id = props.user._id;
-      console.log(type, id);
-      const response = await axios.post(
-        `http://localhost:5000/api/Admin/del${type}`,
+      await axios.post(
+        `${API_BASE}/api/Admin/del${type}`,
         {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -20,8 +20,6 @@ const Userdisplay = (props) => {
           },
         }
       );
-
-      console.log(response);
     } catch (error) {
       console.error(error);
     } finally {
@@ -42,8 +40,8 @@ const Userdisplay = (props) => {
     try {
       let type = props.type;
 
-      const response = await axios.post(
-        `http://localhost:5000/api/Admin/update${type}`,
+      await axios.post(
+        `${API_BASE}/api/Admin/update${type}`,
         {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -60,8 +58,6 @@ const Userdisplay = (props) => {
           },
         }
       );
-
-      console.log(response);
     } catch (error) {
       console.error(error);
     } finally {
@@ -80,12 +76,12 @@ const Userdisplay = (props) => {
     let address = document.getElementById("address").value;
     let age;
 
-    if (props.type == "Patient") {
+    if (props.type === "Patient") {
       disease = document.getElementById("disease").value;
 
       age = document.getElementById("age").value;
     }
-    if (props.type == "Doctor" || props.type == "Lab") {
+    if (props.type === "Doctor" || props.type === "Lab") {
       specification = document.getElementById("specification").value;
     }
     Update(name, email, disease, specification, phnum, password, address, age);
@@ -93,10 +89,9 @@ const Userdisplay = (props) => {
   const book = async () => {
     try {
       let id = props.user._id;
-      console.log(id);
 
-      const response = await axios.post(
-        `http://localhost:5000/api/Doctors/acceptAppointments`,
+      await axios.post(
+        `${API_BASE}/api/Doctors/acceptAppointments`,
         {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -106,8 +101,6 @@ const Userdisplay = (props) => {
           },
         }
       );
-
-      console.log(response);
     } catch (error) {
       console.error(error);
     } finally {
@@ -118,10 +111,9 @@ const Userdisplay = (props) => {
   const reject = async () => {
     try {
       let id = props.user._id;
-      console.log(id);
 
-      const response = await axios.post(
-        `http://localhost:5000/api/Doctors/rejectAppointments`,
+      await axios.post(
+        `${API_BASE}/api/Doctors/rejectAppointments`,
         {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -131,8 +123,6 @@ const Userdisplay = (props) => {
           },
         }
       );
-
-      console.log(response);
     } catch (error) {
       console.error(error);
     } finally {
@@ -144,12 +134,12 @@ const Userdisplay = (props) => {
     <div className="container">
       <div className=" user-box d-flex flex-row align-items-center justify-content-between mx-5 py-2">
         <h3 className="px-2">
-          {props.usertype == "admin" ? props.user.name : null}
-          {props.usertype == "doctor" ? props.user.patientName : null}
+          {props.usertype === "admin" ? props.user.name : null}
+          {props.usertype === "doctor" ? props.user.patientName : null}
         </h3>
 
         <div className="d-flex flex-row align-items-center justify-content-evenly">
-          {props.usertype == "admin" ? (
+          {props.usertype === "admin" ? (
             <>
               <button
                 type="button"
@@ -165,7 +155,7 @@ const Userdisplay = (props) => {
               </button>
             </>
           ) : null}
-          {props.usertype == "doctor" ? (
+          {props.usertype === "doctor" ? (
             <>
               <button type="button" className="btn button me-2" onClick={book}>
                 Book Apointment
@@ -180,33 +170,33 @@ const Userdisplay = (props) => {
       </div>
 
       <div
-        class="modal "
+        className="modal "
         id="exampleModal4"
         tabindex="-1"
         aria-labelledby="exampleModalLabel4"
         aria-hidden="true"
       >
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="exampleModalLabel4">
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title" id="exampleModalLabel4">
                 Edit {props.type}
               </h5>
               <button
                 type="button"
-                class="btn-close"
+                className="btn-close"
                 data-bs-dismiss="modal"
                 aria-label="Close"
               ></button>
             </div>
-            <div class="modal-body">
+            <div className="modal-body">
               <form
                 className=" d-flex flex-column align-items-center"
                 onSubmit={getdata}
               >
                 <div className="row register-side">
                   <div className="col-xl col-lg row  d-flex flex-column mx-xl-3 mx-lg-3">
-                    <label for="name">Enter Name</label>
+                    <label htmlFor="name">Enter Name</label>
                     <input
                       type="text"
                       className="form-control mb-3"
@@ -214,7 +204,7 @@ const Userdisplay = (props) => {
                       aria-label="name"
                       id="name"
                     />
-                    <label for="email">Enter Email</label>
+                    <label htmlFor="email">Enter Email</label>
                     <input
                       type="text"
                       className="form-control mb-3"
@@ -222,9 +212,9 @@ const Userdisplay = (props) => {
                       aria-label="email"
                       id="email"
                     />
-                    {props.type == "Patient" ? (
+                    {props.type === "Patient" ? (
                       <>
-                        <label for="disease">Enter Disease</label>
+                        <label htmlFor="disease">Enter Disease</label>
                         <input
                           type="text"
                           className="form-control mb-3"
@@ -234,9 +224,9 @@ const Userdisplay = (props) => {
                         />
                       </>
                     ) : null}
-                    {props.type == "Doctor" || props.type == "Lab" ? (
+                    {props.type === "Doctor" || props.type === "Lab" ? (
                       <>
-                        <label for="specification">Enter Specification</label>
+                        <label htmlFor="specification">Enter Specification</label>
                         <input
                           type="text"
                           className="form-control mb-3"
@@ -247,7 +237,7 @@ const Userdisplay = (props) => {
                       </>
                     ) : null}
 
-                    <label for="phnum">Enter Phone Number</label>
+                    <label htmlFor="phnum">Enter Phone Number</label>
                     <input
                       type="tel"
                       className="form-control mb-3"
@@ -257,7 +247,7 @@ const Userdisplay = (props) => {
                     />
                   </div>
                   <div className="col-xl col-lg row  d-flex flex-column mx-xl-3 mx-lg-3">
-                    <label for="password">Enter Password</label>
+                    <label htmlFor="password">Enter Password</label>
                     <input
                       type="password"
                       className="form-control mb-3"
@@ -265,7 +255,7 @@ const Userdisplay = (props) => {
                       aria-label="password"
                       id="password"
                     />
-                    <label for="address">Enter Address</label>
+                    <label htmlFor="address">Enter Address</label>
                     <input
                       type="text"
                       className="form-control mb-3"
@@ -273,9 +263,9 @@ const Userdisplay = (props) => {
                       aria-label="address"
                       id="address"
                     />
-                    {props.type == "Patient" ? (
+                    {props.type === "Patient" ? (
                       <>
-                        <label for="age">Enter Age</label>
+                        <label htmlFor="age">Enter Age</label>
                         <input
                           type="number"
                           className="form-control mb-3"
@@ -292,10 +282,10 @@ const Userdisplay = (props) => {
                 </button>
               </form>
             </div>
-            <div class="modal-footer">
+            <div className="modal-footer">
               <button
                 type="button"
-                class="btn btn-secondary"
+                className="btn btn-secondary"
                 data-bs-dismiss="modal"
               >
                 Close

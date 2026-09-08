@@ -1,5 +1,5 @@
 # The API. The React frontend is built separately (see docker-compose.yml).
-FROM node:20-alpine
+FROM node:22-alpine
 ENV NODE_ENV=production
 WORKDIR /app
 COPY package.json package-lock.json* ./

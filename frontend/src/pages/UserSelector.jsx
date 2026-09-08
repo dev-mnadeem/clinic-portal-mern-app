@@ -1,7 +1,6 @@
 import "../../node_modules/bootstrap/dist/css/bootstrap.min.css";
 import "../styles/userStyle.scss";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 
 const UserSelector = () => {
   

@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { currentSession } from "./api/session";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
 import UserSelector from "./pages/UserSelector";
 import Register from "./pages/Register";
@@ -10,23 +11,27 @@ import Patientdash from "./pages/patientdash";
 import Labdash from "./pages/Labdash";
 import PharmacyDash from "./pages/PharmacyDash";
 
+function RequireRole({role, children}) {
+  return currentSession()?.role === role ? children : <Navigate to="/" replace />;
+}
+
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<UserSelector />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/pass" element={<Password />} />
+        <Route path="/register" element={<RequireRole role="admin"><Register /></RequireRole>} />
+        <Route path="/pass" element={currentSession() ? <Password /> : <Navigate to="/" replace />} />
         <Route path="/patientlogin" element={<Login heading="Patients" />} />
         <Route path="/doctorlogin" element={<Login heading="Doctors" />} />
         <Route path="/pharmacylogin" element={<Login heading="Pharmacies" />} />
         <Route path="/lablogin" element={<Login heading="Labs" />} />
         <Route path="/adminlogin" element={<Login heading="Admin" />} />
         
-        <Route path="/doc" element={<DoctorDash />} />
-        <Route path="/pat" element={<Patientdash />} />
-        <Route path="/lab" element={<Labdash />} />
-        <Route path="/pharm" element={<PharmacyDash />}></Route>
+        <Route path="/doc" element={<RequireRole role="doctor"><DoctorDash /></RequireRole>} />
+        <Route path="/pat" element={<RequireRole role="patient"><Patientdash /></RequireRole>} />
+        <Route path="/lab" element={<RequireRole role="lab"><Labdash /></RequireRole>} />
+        <Route path="/pharm" element={<RequireRole role="pharmacy"><PharmacyDash /></RequireRole>}></Route>
       </Routes>
     </Router>
   );

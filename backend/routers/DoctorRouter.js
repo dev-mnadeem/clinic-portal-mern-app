@@ -1,7 +1,7 @@
+import { signIn, roleAccess, changeOwnPassword } from '../security/access.js';
+import rateLimit from 'express-rate-limit';
 import express from "express";
 import {
-  login,
-  changePass,
   DoctorbyID,
   getAllPendingAppointments,
   rejectAppointments,
@@ -14,9 +14,11 @@ import {
 } from "../controllers/DoctorController.js";
 //import * as DocModule from "../controllers/DoctorController.js"
 const router = express.Router();
+router.post('/login', rateLimit({windowMs:15 * 60 * 1000, limit:20, standardHeaders:'draft-7', legacyHeaders:false}), signIn('doctor'));
+router.use(roleAccess('doctor'));
 
-router.post("/login", login);
-router.post("/changePass", changePass);
+
+router.post('/changePass', changeOwnPassword('doctor'));
 router.get("/DoctorbyID", DoctorbyID);
 router.post("/addPrescription", addPrescription);
 router.post("/addReport", addReport);

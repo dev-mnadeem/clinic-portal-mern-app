@@ -1,3 +1,6 @@
+import { useCallback } from 'react';
+import { API_BASE } from "../api/session";
+import { clearSession, currentSession } from "../api/session";
 import React from "react";
 import "../styles/pharmacydashstyle.scss";
 import axios from "axios";
@@ -9,18 +12,21 @@ import { useNavigate } from "react-router-dom";
 const PharmacyDash = () => {
   const navigate = useNavigate();
   const navtohome = () => {
+    clearSession();
     navigate("/");
   };
   const location = useLocation();
+  const actor = location.state?.user || currentSession()?.user;
+  const actorId = actor._id;
   const [patients, setpatients] = useState([]);
   const [medicine, setmedicine] = useState([]);
 
   const [reset, setreset] = useState(false);
-  const fetchpatients = async () => {
+  const fetchpatients = useCallback(async () => {
     let temp;
     try {
       const response = await axios.get(
-        `http://localhost:5000/api/Admin/getAllPatients`,
+        `${API_BASE}/api/Pharmacies/patients`,
         {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -31,21 +37,21 @@ const PharmacyDash = () => {
     } catch (error) {
       console.error(error);
     } finally {
-      setpatients(temp);
+      setpatients(temp || []);
     }
-  };
+  }, []);
 
-  const fetchmedicines = async () => {
+  const fetchmedicines = useCallback(async () => {
     let temp;
     try {
       const response = await axios.post(
-        `http://localhost:5000/api/Pharmacies/getAllMedicine`,
+        `${API_BASE}/api/Pharmacies/getAllMedicine`,
         {
           headers: {
             "Content-Type": "multipart/form-data",
           },
           data: {
-            PharmId: location.state.user._id,
+            PharmId: actorId,
           },
         }
       );
@@ -53,16 +59,16 @@ const PharmacyDash = () => {
     } catch (error) {
       console.error(error);
     } finally {
-      setmedicine(temp);
+      setmedicine(temp || {});
     }
-  };
+  }, [actorId]);
   const fetchprescription = async (patientId, type) => {
     let name;
     let quant;
     let id;
     try {
       const response = await axios.post(
-        `http://localhost:5000/api/Pharmacies/getClientPrescription`,
+        `${API_BASE}/api/Pharmacies/getClientPrescription`,
         {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -80,31 +86,31 @@ const PharmacyDash = () => {
     } catch (error) {
       console.error(error);
     } finally {
-      if (type == "viewonly") {
-        if ((name != undefined) & (quant != undefined)) {
-          document.getElementById("precname").innerHTML = `${name}-${quant}`;
+      if (type === "viewonly") {
+        if (typeof name === 'string' && Number.isFinite(Number(quant))) {
+          document.getElementById("precname").textContent = `${name}-${quant}`;
         } else {
-          document.getElementById("precname").innerHTML =
+          document.getElementById("precname").textContent =
             "No prescription added";
         }
       }
-      if (type == "deliver") {
+      if (type === "deliver") {
         delivermedicine(name, quant, id);
       }
     }
   };
   const addmedicine = async (Med, quantity) => {
     try {
-      const response = await axios.post(
-        `http://localhost:5000/api/Pharmacies/addMedicine`,
+      await axios.post(
+        `${API_BASE}/api/Pharmacies/addMedicine`,
         {
           headers: {
             "Content-Type": "multipart/form-data",
           },
           data: {
-            PharmId: location.state.user._id,
+            PharmId: actorId,
             Med: Med,
-            quantity: quantity,
+            quantity: Number(quantity),
           },
         }
       );
@@ -116,16 +122,16 @@ const PharmacyDash = () => {
   };
   const delivermedicine = async (Med, quantity, PresId) => {
     try {
-      const response = await axios.post(
-        `http://localhost:5000/api/Pharmacies/deliverMedicine`,
+      await axios.post(
+        `${API_BASE}/api/Pharmacies/deliverMedicine`,
         {
           headers: {
             "Content-Type": "multipart/form-data",
           },
           data: {
-            PharmId: location.state.user._id,
+            PharmId: actorId,
             Med: Med,
-            quantity: quantity,
+            quantity: Number(quantity),
             PresId: PresId,
           },
         }
@@ -139,22 +145,21 @@ const PharmacyDash = () => {
   const medadder = () => {
     let quant = document.getElementById("quantity").value;
     let medname = document.getElementById("medname").value;
-    console.log(medname, quant);
-    if (quant != null && quant != undefined && quant != 0) {
+    if (Number.isInteger(Number(quant)) && Number(quant) > 0) {
       addmedicine(medname, quant);
     }
   };
   useEffect(() => {
     fetchpatients();
     fetchmedicines();
-  }, []);
+  }, [fetchpatients, fetchmedicines]);
   useEffect(() => {
     if (reset) {
       fetchpatients();
       fetchmedicines();
       setreset(false);
     }
-  }, [reset]);
+  }, [reset, fetchpatients, fetchmedicines]);
 
   const dyntext = (id) => {
     fetchprescription(id, "viewonly");
@@ -189,7 +194,7 @@ const PharmacyDash = () => {
                 <div>
                   <button
                     type="button"
-                    class="btn button"
+                    className="btn button"
                     data-bs-toggle="modal"
                     data-bs-target="#exampleModal"
                     onClick={() => dyntext(patients[key]._id)}
@@ -198,7 +203,7 @@ const PharmacyDash = () => {
                   </button>
                   <button
                     type="button"
-                    class="btn button ms-3"
+                    className="btn button ms-3"
                     onClick={() => deliver(patients[key]._id)}
                   >
                     Deliver
@@ -208,32 +213,32 @@ const PharmacyDash = () => {
             ))}
 
             <div
-              class="modal "
+              className="modal "
               id="exampleModal"
               tabindex="-1"
               aria-labelledby="exampleModalLabel"
               aria-hidden="true"
             >
-              <div class="modal-dialog">
-                <div class="modal-content">
-                  <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">
+              <div className="modal-dialog">
+                <div className="modal-content">
+                  <div className="modal-header">
+                    <h5 className="modal-title" id="exampleModalLabel">
                       Prescription
                     </h5>
                     <button
                       type="button"
-                      class="btn-close"
+                      className="btn-close"
                       data-bs-dismiss="modal"
                       aria-label="Close"
                     ></button>
                   </div>
-                  <div class="modal-body">
+                  <div className="modal-body">
                     <h4 id="precname">Medicine name - Quantity</h4>
                   </div>
-                  <div class="modal-footer">
+                  <div className="modal-footer">
                     <button
                       type="button"
-                      class="btn btn-secondary"
+                      className="btn btn-secondary"
                       data-bs-dismiss="modal"
                     >
                       Close
@@ -246,7 +251,7 @@ const PharmacyDash = () => {
             <h3 className="mt-2">Medicines</h3>
             <button
               type="button"
-              class="btn button"
+              className="btn button"
               data-bs-toggle="modal"
               data-bs-target="#exampleModal2"
             >
@@ -264,50 +269,50 @@ const PharmacyDash = () => {
             ))}
 
             <div
-              class="modal "
+              className="modal "
               id="exampleModal2"
               tabindex="-1"
               aria-labelledby="exampleModalLabel2"
               aria-hidden="true"
             >
-              <div class="modal-dialog">
-                <div class="modal-content">
-                  <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel2">
+              <div className="modal-dialog">
+                <div className="modal-content">
+                  <div className="modal-header">
+                    <h5 className="modal-title" id="exampleModalLabel2">
                       Medicine
                     </h5>
                     <button
                       type="button"
-                      class="btn-close"
+                      className="btn-close"
                       data-bs-dismiss="modal"
                       aria-label="Close"
                     ></button>
                   </div>
-                  <div class="modal-body">
-                    <div class="mb-3">
-                      <label for="medname" class="form-label">
+                  <div className="modal-body">
+                    <div className="mb-3">
+                      <label htmlFor="medname" className="form-label">
                         Name
                       </label>
-                      <input type="text" class="form-control" id="medname" />
+                      <input type="text" className="form-control" id="medname" />
                     </div>
-                    <div class="mb-3">
-                      <label for="quantity" class="form-label">
+                    <div className="mb-3">
+                      <label htmlFor="quantity" className="form-label">
                         Quantity
                       </label>
-                      <input type="number" class="form-control" id="quantity" />
+                      <input type="number" className="form-control" id="quantity" />
                     </div>
                   </div>
-                  <div class="modal-footer">
+                  <div className="modal-footer">
                     <button
                       type="button"
-                      class="btn btn-secondary"
+                      className="btn btn-secondary"
                       data-bs-dismiss="modal"
                     >
                       Close
                     </button>
                     <button
                       type="button"
-                      class="btn btn-primary"
+                      className="btn btn-primary"
                       onClick={medadder}
                     >
                       Save changes

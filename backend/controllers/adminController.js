@@ -5,7 +5,7 @@ import Admin from "../models/adminModel.js";
 import Appointment from "../models/AppointmentModel.js";
 import Lab from "../models/LaboratoryModel.js";
 import Report from "../models/reportModel.js";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 const getAllPatients = async (req, res) => {
   try {
@@ -45,7 +45,6 @@ const getAllLabs = async (req, res) => {
 };
 const addPatient = async (req, res) => {
   try {
-    console.log(req.body);
 
     const { name, email, password, disease, age, phone, address } =
       req.body.data;
@@ -75,7 +74,6 @@ const addPatient = async (req, res) => {
 };
 const addDoctor = async (req, res) => {
   try {
-    console.log(req.body.data);
 
     const { name, email, password, specification, phone, address } =
       req.body.data;
@@ -103,7 +101,6 @@ const addDoctor = async (req, res) => {
 
 const addPharmacy = async (req, res) => {
   try {
-    console.log(req.body);
 
     const { name, email, password, phone } = req.body.data;
     const saltRounds = 10;
@@ -127,7 +124,6 @@ const addPharmacy = async (req, res) => {
 };
 const addLab = async (req, res) => {
   try {
-    console.log(req.body);
 
     const { name, email, password, address, phone, specification } =
       req.body.data;
@@ -214,7 +210,6 @@ const delLab = async (req, res) => {
 };
 const updatePatient = async (req, res) => {
   try {
-    console.log(req.body.data);
     // Find user based on email
     const user = await Patient.findOne({ email: req.body.data.email });
 
@@ -263,7 +258,6 @@ const updatePatient = async (req, res) => {
 };
 
 const updateDoctor = async (req, res) => {
-  console.log(req.body.data);
   try {
     // Find user based on email
     const user = await Doctor.findOne({ email: req.body.data.email });
@@ -309,7 +303,6 @@ const updateDoctor = async (req, res) => {
 };
 
 const updatePharmacy = async (req, res) => {
-  console.log(req.body.data);
 
   try {
     // Find user based on email
@@ -418,29 +411,7 @@ const signup = async (req, res) => {
     res.status(201).json(newUser);
   } catch (error) {
     console.error(error);
-    res.status(500);
-  }
-};
-const login = async (req, res) => {
-  const { password, email } = req.body.data;
-
-  try {
-    // Find the user by username
-    const user = await Admin.findOne({ email: email }).select('+password');
-    if (!user) {
-      return res.status(401).send("Invalid credentials");
-    }
-
-    // Compare the provided password with the stored hashed password
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) {
-      return res.status(401).send("Invalid credentials");
-    }
-
-    res.status(200).json(user);
-  } catch (error) {
-    console.error(error);
-    res.status(500);
+    res.status(500).json({error:"Internal server error"});
   }
 };
 export {
@@ -460,6 +431,5 @@ export {
   updateDoctor,
   updatePharmacy,
   updateLab,
-  login,
   signup,
 };

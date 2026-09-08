@@ -4,57 +4,7 @@ import Appointment from "../models/AppointmentModel.js";
 import Laboratory from "../models/LaboratoryModel.js";
 import Prescription from "../models/prescriptionModel.js";
 import Report from "../models/reportModel.js";
-import bcrypt from "bcrypt";
-const login = async (req, res) => {
-  const { password, email } = req.body.data;
 
-  try {
-    // Find the user by username
-    const user = await Doctor.findOne({ email: email }).select('+password');
-    if (!user) {
-      return res.status(401).send("Invalid credentials");
-    }
-
-    // Compare the provided password with the stored hashed password
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) {
-      return res.status(401).send("Invalid credentials");
-    }
-
-    res.status(200).json(user);
-  } catch (error) {
-    console.error(error);
-    res.status(500);
-  }
-};
-
-const changePass = async (req, res) => {
-  const { password, email, newpass } = req.body.data;
-
-  try {
-    // Find the user by username
-    const user = await Doctor.findOne({ email: email }).select('+password');
-    if (!user) {
-      return res.status(401).send("Invalid credentials");
-    }
-
-    // Compare the provided password with the stored hashed password
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) {
-      return res.status(401).send("Invalid credentials");
-    } else {
-      const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(newpass, saltRounds);
-      user.password = hashedPassword;
-      await user.save();
-    }
-
-    res.status(200).json(user);
-  } catch (error) {
-    console.error(error);
-    res.status(500);
-  }
-};
 
 const DoctorbyID = async (req, res) => {
   try {
@@ -67,7 +17,7 @@ const DoctorbyID = async (req, res) => {
     }
   } catch (error) {
     console.error(error);
-    res.status(500);
+    res.status(500).json({error:"Internal server error"});
   }
 };
 const getAllPendingAppointments = async (req, res) => {
@@ -94,7 +44,7 @@ const getAllPendingAppointments = async (req, res) => {
     }
   } catch (error) {
     console.error(error);
-    res.status(500);
+    res.status(500).json({error:"Internal server error"});
   }
 };
 const getAllAcceptedAppointments = async (req, res) => {
@@ -121,7 +71,7 @@ const getAllAcceptedAppointments = async (req, res) => {
     }
   } catch (error) {
     console.error(error);
-    res.status(500);
+    res.status(500).json({error:"Internal server error"});
   }
 };
 const rejectAppointments = async (req, res) => {
@@ -131,11 +81,11 @@ const rejectAppointments = async (req, res) => {
     if (!App) {
       return res.status(401).send("Invalid value");
     } else {
-      return res.status(200);
+      return res.status(200).json({message: "Updated successfully"});
     }
   } catch (error) {
     console.error(error);
-    res.status(500);
+    res.status(500).json({error:"Internal server error"});
   }
 };
 const acceptAppointments = async (req, res) => {
@@ -148,23 +98,21 @@ const acceptAppointments = async (req, res) => {
     } else {
       App.Accepted = true;
       App.save();
-      return res.status(200);
+      return res.status(200).json({message: "Updated successfully"});
     }
   } catch (error) {
     console.error(error);
-    res.status(500);
+    res.status(500).json({error:"Internal server error"});
   }
 };
 const addPrescription = async (req, res) => {
   try {
     const { Med, patientId, quantity, doctorId } = req.body.data;
-    console.log(Med, patientId, quantity, doctorId);
     if (Med === null || patientId === null || quantity === null) {
       return res.status(401).send("Invalid value");
     } else {
       const PatientObj = await Patient.findById(patientId);
       const DoctorObj = await Doctor.findById(doctorId);
-      console.log(PatientObj, DoctorObj);
       if (!PatientObj || !DoctorObj) {
         return res.status(401).send("Invalid Parameters Entered");
       } else {
@@ -185,7 +133,7 @@ const addPrescription = async (req, res) => {
     }
   } catch (error) {
     console.error(error);
-    res.status(500);
+    res.status(500).json({error:"Internal server error"});
   }
 };
 const addReport = async (req, res) => {
@@ -197,7 +145,6 @@ const addReport = async (req, res) => {
     } else {
       const PatientObj = await Patient.findById(patientId);
       const DoctorObj = await Doctor.findById(doctorId);
-      console.log(PatientObj, DoctorObj);
       if (!PatientObj || !DoctorObj) {
         return res.status(401).send("Invalid Patient OR Doctor");
       } else {
@@ -208,11 +155,12 @@ const addReport = async (req, res) => {
           patientName: PatientObj.name,
         });
         await newRep.save();
+        return res.status(201).json(newRep);
       }
     }
   } catch (error) {
     console.error(error);
-    res.status(500);
+    res.status(500).json({error:"Internal server error"});
   }
 };
 const getPatientReport = async (req, res) => {
@@ -232,7 +180,7 @@ const getPatientReport = async (req, res) => {
     }
   } catch (error) {
     console.error(error);
-    res.status(500);
+    res.status(500).json({error:"Internal server error"});
   }
 };
 const addReportRemarks = async (req, res) => {
@@ -252,12 +200,10 @@ const addReportRemarks = async (req, res) => {
     }
   } catch (error) {
     console.error(error);
-    res.status(500);
+    res.status(500).json({error:"Internal server error"});
   }
 };
 export {
-  login,
-  changePass,
   DoctorbyID,
   getAllPendingAppointments,
   rejectAppointments,

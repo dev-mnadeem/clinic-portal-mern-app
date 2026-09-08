@@ -145,3 +145,44 @@
     }
   }
 }
+
+// Keep the operation controls visible without a full-height illustration section.
+#register {
+  height: auto;
+  min-height: 100vh;
+  background: #f4f7fb;
+  #side-nav {
+    background: #172d48;
+    color: #e9f0fa;
+    min-height: 100vh;
+    height: auto !important;
+    .nav { height: auto; padding: 24px 0; gap: 40px; }
+    h1 { color: white; font-weight: 700; }
+    .nav .navigate { gap: 6px; }
+    .nav .navigate .navlink { border: 0; cursor: pointer; padding-top: 12px; border-radius: 6px; }
+    .nav .navigate .navlink:hover { background: #284565; border: 0; }
+  }
+  #main-content {
+    padding: 32px;
+    background: #f4f7fb;
+    .workspace-heading { margin-bottom: 28px; }
+    .workspace-heading span { color: #326b98; font-size: 12px; letter-spacing: .12em; font-weight: 700; }
+    .workspace-heading h2 { margin-top: 10px; font-weight: 700; color: #172d48; }
+    .workspace-heading p { color: #526578; }
+    .user-contain { height: auto; display: grid !important; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 16px; margin-bottom: 28px; }
+    .user-contain .circle-contain { background: white; border: 1px solid #e0e7ef; border-radius: 12px; padding: 22px 8px; cursor: pointer; }
+    .user-contain .circle-contain .circle { width: 74px; height: 74px; }
+    .user-contain .circle-contain h3 { font-size: 16px; margin: 14px 0 0; color: #172d48; }
+    .user-contain .circle-contain:hover { border-color: #568bb6; }
+    .user-contain .circle-contain:hover h3 { color: #245d8b; }
+  }
+}
+@media (max-width: 767px) {
+  #register {
+    #side-nav { width: 100%; min-height: auto; height: auto !important; }
+    #side-nav .nav { padding: 16px; gap: 12px; }
+    #side-nav .nav .navigate { display: grid !important; grid-template-columns: repeat(2,minmax(0,1fr)); }
+    #main-content { width: 100%; padding: 20px; }
+    #main-content .user-contain { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  }
+}

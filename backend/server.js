@@ -1,35 +1,13 @@
-import express from "express";
-import mongoose from "mongoose";
-import dotenv from "dotenv";
-import PatientRouter from "./routers/PatientRouter.js";
-import DoctorRouter from "./routers/DoctorRouter.js";
-import PharmRouter from "./routers/PharmRouter.js";
-import LabRouter from "./routers/LabRouter.js";
-import adminRouter from "./routers/adminRouter.js";
-import cors from "cors";
-dotenv.config();
-const app = express();
-app.use(express.json());
-app.use(cors());
+import 'dotenv/config';
+import mongoose from 'mongoose';
+import app from './app.js';
 
-app.use("/api/Patients", PatientRouter);
-app.use("/api/Doctors", DoctorRouter);
-app.use("/api/Pharmacies", PharmRouter);
-app.use("/api/Labs", LabRouter);
-app.use("/api/Admin", adminRouter);
-app.use("*", (req, res) => {
-  res.status(404);
-});
-
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log("MongoDB connected");
-  })
-  .catch((error) => {
-    console.error("MongoDB connection error:", error);
-  });
-
-app.listen(5000, () => {
-  console.log("Server started on port 5000");
-});
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) throw new Error('Set a generated JWT_SECRET of at least 32 characters');
+if (!process.env.MONGO_URI) throw new Error('Set MONGO_URI to your own database');
+await mongoose.connect(process.env.MONGO_URI);
+const server = app.listen(Number(process.env.PORT || 5000), process.env.HOST || '0.0.0.0', () => console.log('Clinic API ready'));
+async function stop() {
+  server.close(async () => {await mongoose.disconnect(); process.exit(0);});
+}
+process.on('SIGTERM', stop);
+process.on('SIGINT', stop);

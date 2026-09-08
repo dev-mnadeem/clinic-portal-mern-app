@@ -1,140 +1,35 @@
-import "../../node_modules/bootstrap/dist/css/bootstrap.min.css";
-import "../styles/passwordStyle.scss";
-import { useNavigate } from "react-router-dom";
-import { useLocation } from "react-router-dom";
-import { useState, useEffect } from "react";
-import axios from "axios";
+import {useState} from 'react';
+import {useNavigate} from 'react-router-dom';
+import axios from 'axios';
+import {API_BASE,currentSession,clearSession} from '../api/session';
+import '../styles/passwordStyle.scss';
 
-const Password = () => {
-  let location = useLocation();
-  let navigate = useNavigate();
-
-  const navtodoc = (user) => {
-    navigate("/doc", {
-      state: {
-        user: user,
-      },
-    });
-  };
-
-  const navtopat = (user) => {
-    navigate("/pat", {
-      state: {
-        user: user,
-      },
-    });
-  };
-
-  const navtolab = (user) => {
-    navigate("/lab", {
-      state: {
-        user: user,
-      },
-    });
-  };
-  const navtopharm = (user) => {
-    navigate("/pharm", {
-      state: {
-        user: user,
-      },
-    });
-  };
-  const navtoadmin = (user) => {
-    navigate("/register", {
-      state: {
-        user: user,
-      },
-    });
-  };
-
-  const changepass = async () => {
-    let user;
+const endpoints={patient:'Patients',doctor:'Doctors',lab:'Labs',pharmacy:'Pharmacies',admin:'Admin'};
+export default function Password() {
+  const navigate=useNavigate();
+  const session=currentSession();
+  const [password,setPassword]=useState('');
+  const [newpass,setNewpass]=useState('');
+  const [error,setError]=useState('');
+  const [saving,setSaving]=useState(false);
+  async function submit(event) {
+    event.preventDefault();setError('');setSaving(true);
     try {
-      let type = location.state.type;
-      let email = document.getElementById("email").value;
-      let password = document.getElementById("password").value;
-      let password2 = document.getElementById("password2").value;
-      console.log(type);
-      const response = await axios.post(
-        `http://localhost:5000/api/${type}/changePass`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          data: {
-            email: email,
-            password: password,
-            newpass: password2,
-          },
-        }
-      );
-      user = response.data;
-      console.log(user);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      if (location.state.type == "Doctors") {
-        navtodoc(user);
-      }
-      if (location.state.type == "Patients") {
-        navtopat(user);
-      }
-      if (location.state.type == "Labs") {
-        navtolab(user);
-      }
-      if (location.state.type == "Pharmacies") {
-        navtopharm(user);
-      }
-      if (location.state.type == "Admin") {
-        navtoadmin(user);
-      }
-    }
-  };
-
-  useEffect(() => {
-    console.log(location.state.type);
-  }, []);
-  return (
-    <div id="password-page">
-      <form className="d-flex flex-column align-items-center justify-content-evenly">
-        <h1>Reset Password</h1>
-        <div className="form-group">
-          <label for="exampleInputEmail1">Email address</label>
-          <input
-            type="email"
-            className="form-control"
-            aria-describedby="emailHelp"
-            placeholder="Enter email"
-            id="email"
-            name="email"
-          />
-        </div>
-        <div className="form-group">
-          <label for="exampleInputPassword1">Password</label>
-          <input
-            type="password"
-            className="form-control"
-            placeholder="Password"
-            id="password"
-            name="password"
-          />
-        </div>
-        <div className="form-group">
-          <label for="exampleInputPassword2">Enter New Password</label>
-          <input
-            type="password"
-            className="form-control"
-            placeholder="Password"
-            id="password2"
-            name="password2"
-          />
-        </div>
-
-        <button type="button" className="btn login-button" onClick={changepass}>
-          Reset
-        </button>
-      </form>
-    </div>
-  );
-};
-export default Password;
+      await axios.post(`${API_BASE}/api/${endpoints[session.role]}/changePass`,{data:{password,newpass}});
+      clearSession();navigate('/');
+    } catch {setError('Password change failed. Check your current password and try again.');}
+    finally {setSaving(false);}
+  }
+  return <main id="password-page" className="container py-5">
+    <h1>Change your password</h1>
+    <p>Changing it signs out your existing sessions.</p>
+    <form onSubmit={submit}>
+      <label htmlFor="current-password" className="form-label">Current password</label>
+      <input id="current-password" className="form-control mb-3" type="password" autoComplete="current-password" required value={password} onChange={event=>setPassword(event.target.value)}/>
+      <label htmlFor="new-password" className="form-label">New password</label>
+      <input id="new-password" className="form-control mb-3" type="password" autoComplete="new-password" required minLength={12} value={newpass} onChange={event=>setNewpass(event.target.value)}/>
+      {error && <p role="alert">{error}</p>}
+      <button className="btn btn-primary" disabled={saving}>{saving?'Saving…':'Change password'}</button>
+    </form>
+  </main>;
+}

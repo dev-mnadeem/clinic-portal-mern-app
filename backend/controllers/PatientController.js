@@ -1,12 +1,11 @@
 import Patient from "../models/patientModel.js";
-import bcrypt from "bcrypt";
 import Doctor from "../models/DoctorModel.js";
 import Appointment from "../models/AppointmentModel.js";
 import Prescription from "../models/prescriptionModel.js";
 import Report from "../models/reportModel.js";
 const getPatientById = async (req, res) => {
   try {
-    const patientId = req.params.id;
+    const patientId = req.actor.id;
     const patient = await Patient.findById(patientId);
     if (!patient) {
       return res.status(404).json({ error: "Patient not found" });
@@ -20,7 +19,6 @@ const getPatientById = async (req, res) => {
 
 const updatePatient = async (req, res) => {
   try {
-    console.log(req.body);
     // Find user based on email
     const user = await Patient.findOne({ email: req.body.email });
 
@@ -35,9 +33,7 @@ const updatePatient = async (req, res) => {
     }
 
     if (req.body.password !== undefined) {
-      const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(req.body.password, saltRounds);
-      user.password = hashedPassword;
+      return res.status(400).json({error:'Use changePass with your current password'});
     }
 
     if (req.body.disease) {
@@ -68,25 +64,6 @@ const updatePatient = async (req, res) => {
   }
 };
 
-const patientLogin = async (req, res) => {
-  try {
-    const { email, password } = req.body.data;
-    const PatientObj = await Patient.findOne({ email }).select('+password');
-    if (!PatientObj) {
-      return res.status(401).json({ error: "Invalid email or password" });
-    }
-    const passwordMatch = await bcrypt.compare(password, PatientObj.password);
-    // console.log(password,PatientObj.password)
-    // console.log(passwordMatch)
-    if (!passwordMatch) {
-      return res.status(401).json({ error: "Invalid email or password" });
-    }
-    res.status(200).json(PatientObj);
-  } catch (error) {
-    console.error("Error logging in Patient:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
 const getPatientByEmail = async (req, res) => {
   try {
     const email = req.body.email;
@@ -162,40 +139,12 @@ const getAllAppointments = async (req, res) => {
     }
   } catch (error) {
     console.error(error);
-    res.status(500);
-  }
-};
-const changePass = async (req, res) => {
-  const { password, email, newpass } = req.body.data;
-
-  try {
-    // Find the user by username
-    const user = await Patient.findOne({ email: email }).select('+password');
-    if (!user) {
-      return res.status(401).send("Invalid credentials");
-    }
-
-    // Compare the provided password with the stored hashed password
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) {
-      return res.status(401).send("Invalid credentials");
-    } else {
-      const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(newpass, saltRounds);
-      user.password = hashedPassword;
-      await user.save();
-    }
-
-    res.status(200).json(user);
-  } catch (error) {
-    console.error(error);
-    res.status(500);
+    res.status(500).json({error:"Internal server error"});
   }
 };
 const getMyReport = async (req, res) => {
   try {
     const { patientId } = req.body.data;
-    console.log(patientId);
     if (!patientId) {
       return res.status(401).send("Invalid credentials");
     } else {
@@ -210,17 +159,15 @@ const getMyReport = async (req, res) => {
     }
   } catch (error) {
     console.error(error);
-    res.status(500);
+    res.status(500).json({error:"Internal server error"});
   }
 };
 export {
   getPatientById,
   updatePatient,
-  patientLogin,
   getPatientByEmail,
   addAppointment,
   myPrescription,
   getAllAppointments,
-  changePass,
   getMyReport,
 };

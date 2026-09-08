@@ -4,11 +4,12 @@
 # committed here twice, exposing two Atlas cluster passwords — see the README.
 services:
   mongo:
-    image: mongo:6.0
+    image: mongo:7.0
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
     restart: unless-stopped
     volumes: [mongo-data:/data/db]
     healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      test: ["CMD", "mongosh", "--quiet", "--eval", "try { rs.status().ok } catch (e) { rs.initiate({_id:'rs0',members:[{_id:0,host:'mongo:27017'}]}).ok }"]
       interval: 5s
       timeout: 5s
       retries: 12
@@ -18,7 +19,9 @@ services:
     image: clinic-portal-api:local
     container_name: clinic_api
     environment:
-      MONGO_URI: mongodb://mongo:27017/curify
+      MONGO_URI: mongodb://mongo:27017/curify?replicaSet=rs0
+      JWT_SECRET: ${JWT_SECRET:?Set a generated JWT_SECRET}
+      CORS_ORIGIN: http://localhost:4000
       PORT: 5000
     ports: ["5100:5000"]
     depends_on:
