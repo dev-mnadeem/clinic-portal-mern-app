@@ -93,3 +93,7 @@ tracked configuration, but their revocation is unconfirmed. The account owner mu
 or revoke them in Atlas. Normal maintenance commits preserve history; a coordinated security
 rewrite would be a separate operation, after revocation. Never use real patient data in a
 public demo.
+
+## Author
+
+[**Muhammad Nadeem**](https://github.com/dev-mnadeem)
